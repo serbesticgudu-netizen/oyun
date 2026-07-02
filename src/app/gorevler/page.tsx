@@ -100,19 +100,23 @@ export default function Gorevler() {
       return
     }
 
-    await supabase.from('kisisel_arsiv').insert({
-      kullanici_id: user.id,
-      tip: 'gorev',
-      baslik: `Görev kabul edildi`,
-      aciklama: gorevler.find(g => g.id === gorevId)?.isim ?? '',
-      referans_id: gorevId,
-    })
+    if (yeniKabul) {
+      await supabase.from('kisisel_arsiv').insert({
+        kullanici_id: user.id,
+        tip: 'gorev',
+        baslik: `Görev kabul edildi`,
+        aciklama: gorevler.find(g => g.id === gorevId)?.isim ?? '',
+        referans_id: gorevId,
+      })
 
-    setKabuller(prev => {
-      if (prev.some(k => k.gorev_id === gorevId)) return prev
-      return [...prev, { gorev_id: gorevId, durum: 'aktif' }]
-    })
-    setTumKabuller(prev => [...prev.filter(k => !(k.kullanici_id === user.id && k.gorev_id === gorevId)), yeniKabul as GorevKatilimi])
+      setKabuller(prev => {
+        if (prev.some(k => k.gorev_id === gorevId)) return prev
+        return [...prev, { gorev_id: gorevId, durum: 'aktif' }]
+      })
+
+      const normalizedYeniKabul = normalizeKatilim(yeniKabul)
+      setTumKabuller(prev => [...prev.filter(k => !(k.kullanici_id === user.id && k.gorev_id === gorevId)), normalizedYeniKabul])
+    }
     setIslem(null)
   }
 
