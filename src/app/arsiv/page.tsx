@@ -45,30 +45,30 @@ export default function Arsiv() {
           <div className="w-24 h-px bg-white/20 mt-2" />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 w-full">
+        <div className="grid grid-cols-2 md:grid-cols-1 gap-4 md:gap-6 w-full">
           {bolumler.map((b) => (
             <Link
               key={b.href}
               href={b.href}
-              className="group border border-white/10 bg-black/40 p-8 flex items-center gap-8 hover:border-white/30 hover:bg-black/60 transition-all"
+              className="group border border-white/10 bg-black/40 p-6 md:p-8 flex flex-col md:flex-row items-center text-center md:text-left gap-4 md:gap-8 hover:border-white/30 hover:bg-black/60 transition-all"
             >
-              <span className="text-5xl text-white/20 group-hover:text-white/40 transition-all">
+              <span className="text-4xl md:text-5xl text-white/20 group-hover:text-white/40 transition-all">
                 {b.sembol}
               </span>
               <div className="flex flex-col gap-2">
                 <h2 className="text-white text-lg tracking-widest uppercase">{b.baslik}</h2>
                 <p className="text-white/40 text-sm tracking-wider">{b.aciklama}</p>
               </div>
-              <span className="ml-auto text-white/20 group-hover:text-white/50 transition-all text-2xl">→</span>
+              <span className="hidden md:block ml-auto text-white/20 group-hover:text-white/50 transition-all text-2xl">→</span>
             </Link>
           ))}
         </div>
 
         <Link
-          href="/"
+          href="/portal"
           className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all"
         >
-          ← Ana Geçide Dön
+          ← Portal'a Dön
         </Link>
       </div>
     </main>
