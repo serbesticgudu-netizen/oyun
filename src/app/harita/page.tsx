@@ -20,6 +20,11 @@ type Profil = {
   is_admin: boolean
 }
 
+type GorevKabulu = {
+  gorev_id: string
+  durum: string
+}
+
 const tipStil: Record<string, { renk: string; glow: string; etiket: string; bg: string; rgb: string }> = {
   gecit:    { renk: '#a855f7', glow: '0 0 14px rgba(168,85,247,0.7)',   etiket: 'RUH GEÇİDİ',   bg: 'rgba(168,85,247,0.1)',  rgb: '168,85,247'  },
   gorev:    { renk: '#22d3ee', glow: '0 0 14px rgba(34,211,238,0.7)',   etiket: 'GÖREV',         bg: 'rgba(34,211,238,0.1)',  rgb: '34,211,238'  },
@@ -38,6 +43,7 @@ export default function Harita() {
   const [profil, setProfil] = useState<Profil | null>(null)
   const [editingNokta, setEditingNokta] = useState<Partial<Nokta> | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [gorevKabulleri, setGorevKabulleri] = useState<GorevKabulu[]>([])
   const [isListOpen, setIsListOpen] = useState(false)
 
   const handleFilterClick = (tip: string | null) => {
@@ -61,8 +67,11 @@ export default function Harita() {
         setProfil(p)
       }
 
-      const { data } = await supabase.from('gecit_noktalari').select('*').order('tip')
-      setNoktalar(data ?? [])
+      const { data: noktalarData } = await supabase.from('gecit_noktalari').select('*').order('tip')
+      setNoktalar(noktalarData ?? [])
+
+      const { data: kabullerData } = await supabase.from('gorev_kabulleri').select('gorev_id, durum')
+      setGorevKabulleri(kabullerData ?? [])
     }
     yukle()
   }, [])
@@ -377,57 +386,67 @@ export default function Harita() {
                     <button onClick={handleSave} disabled={isSaving} className="border border-emerald-500/50 text-emerald-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-emerald-500/10 disabled:opacity-50">{isSaving ? '...' : 'Kaydet'}</button>
                   </div>
                 </div>
-              ) : secili && (
-                <>
-                  <div className="p-6 border-b border-white/10 flex flex-col gap-3"
-                    style={{ background: tipStil[secili.tip].bg }}>
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex flex-col gap-2 flex-1">
-                        <span className="text-xs tracking-widest uppercase flex items-center gap-2"
-                          style={{ color: tipStil[secili.tip].renk }}>
-                          {secili.simge} {tipStil[secili.tip].etiket}
-                        </span>
-                        <h2 className="text-white text-base tracking-wider leading-snug">{secili.isim}</h2>
+              ) : secili && (() => {
+                const kabulEdenSayisi = secili.tip === 'gorev'
+                  ? gorevKabulleri.filter(k => k.gorev_id === secili.id && k.durum === 'aktif').length
+                  : 0;
+                return (
+                  <>
+                    <div className="p-6 border-b border-white/10 flex flex-col gap-3"
+                      style={{ background: tipStil[secili.tip].bg }}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex flex-col gap-2 flex-1">
+                          <span className="text-xs tracking-widest uppercase flex items-center gap-2"
+                            style={{ color: tipStil[secili.tip].renk }}>
+                            {secili.simge} {tipStil[secili.tip].etiket}
+                          </span>
+                          <h2 className="text-white text-base tracking-wider leading-snug">{secili.isim}</h2>
+                        </div>
+                        <div className="flex items-center gap-4 shrink-0">
+                          {profil?.is_admin && (
+                            <button onClick={() => { setEditingNokta(secili); setSecili(null); }} className="text-cyan-400/60 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>
+                          )}
+                          <button onClick={() => setSecili(null)}
+                            className="text-white/20 hover:text-white/60 transition-all text-xl">×</button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4 shrink-0">
-                        {profil?.is_admin && (
-                          <button onClick={() => { setEditingNokta(secili); setSecili(null); }} className="text-cyan-400/60 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs tracking-widest uppercase px-2 py-1 border w-fit ${
+                          secili.durum === 'aktif' ? 'text-emerald-400 border-emerald-400/30' :
+                          secili.durum === 'kapali' ? 'text-white/20 border-white/10' :
+                          'text-amber-400 border-amber-400/30'
+                        }`}>{durumEtiket[secili.durum]}</span>
+                        {kabulEdenSayisi > 0 && (
+                          <span className="text-cyan-400/50 text-xs tracking-wider">{kabulEdenSayisi} kullanıcı için aktif</span>
                         )}
-                        <button onClick={() => setSecili(null)}
-                          className="text-white/20 hover:text-white/60 transition-all text-xl">×</button>
                       </div>
                     </div>
-                    <span className={`text-xs tracking-widest uppercase px-2 py-1 border w-fit ${
-                      secili.durum === 'aktif' ? 'text-emerald-400 border-emerald-400/30' :
-                      secili.durum === 'kapali' ? 'text-white/20 border-white/10' :
-                      'text-amber-400 border-amber-400/30'
-                    }`}>{durumEtiket[secili.durum]}</span>
-                  </div>
 
-                  <div className="flex border-b border-white/10">
-                    {(['mitolojik', 'fiziksel'] as const).map(t => (
-                      <button key={t} onClick={() => setTab(t)}
-                        className={`flex-1 py-3 text-xs tracking-widest uppercase transition-all border-b ${
-                          tab === t ? 'text-white border-white/40' : 'text-white/20 border-transparent hover:text-white/40'
-                        }`}>
-                        {t === 'mitolojik' ? '✦ Mitolojik' : '◈ Fiziksel'}
-                      </button>
-                    ))}
-                  </div>
+                    <div className="flex border-b border-white/10">
+                      {(['mitolojik', 'fiziksel'] as const).map(t => (
+                        <button key={t} onClick={() => setTab(t)}
+                          className={`flex-1 py-3 text-xs tracking-widest uppercase transition-all border-b ${
+                            tab === t ? 'text-white border-white/40' : 'text-white/20 border-transparent hover:text-white/40'
+                          }`}>
+                            {t === 'mitolojik' ? '✦ Mitolojik' : '◈ Fiziksel'}
+                          </button>
+                      ))}
+                    </div>
 
-                  <div className="p-6 flex-1">
-                    <p className="text-white/60 text-sm leading-relaxed tracking-wide">
-                      {tab === 'mitolojik' ? secili.mitolojik_gecmis : secili.fiziksel_gecmis}
-                    </p>
-                  </div>
+                    <div className="p-6 flex-1">
+                      <p className="text-white/60 text-sm leading-relaxed tracking-wide">
+                        {tab === 'mitolojik' ? secili.mitolojik_gecmis : secili.fiziksel_gecmis}
+                      </p>
+                    </div>
 
-                  <div className="p-4 border-t border-white/5">
-                    <p className="text-white/15 text-xs tracking-wider text-center font-mono">
-                      {secili.koordinat_lat.toFixed(4)}° K &nbsp;·&nbsp; {secili.koordinat_lng.toFixed(4)}° D
-                    </p>
-                  </div>
-                </>
-              )}
+                    <div className="p-4 border-t border-white/5">
+                      <p className="text-white/15 text-xs tracking-wider text-center font-mono">
+                        {secili.koordinat_lat.toFixed(4)}° K &nbsp;·&nbsp; {secili.koordinat_lng.toFixed(4)}° D
+                      </p>
+                    </div>
+                  </>
+                )
+              })()}
             </div>
           )}
         </div>

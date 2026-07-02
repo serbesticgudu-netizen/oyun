@@ -315,7 +315,7 @@ export default function Gorevler() {
                               <p className="text-white/10 text-xs tracking-widest text-center group-hover:text-white/20 transition-all">
                                 Açmak için tıkla
                               </p>
-                              {kabulEdenler.length > 0 && !kabul && (
+                              {kabulEdenler.length > 0 && (
                                 <p className="text-cyan-400/30 text-xs mt-2">{kabulEdenler.length} kullanıcı için aktif</p>
                               )}
                             </div>
