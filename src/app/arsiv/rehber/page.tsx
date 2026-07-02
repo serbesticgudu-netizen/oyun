@@ -142,7 +142,7 @@ export default function Rehber() {
 
         <div className="flex-1 min-h-0 flex flex-col gap-2 md:gap-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 flex-grow">
-            {bolumler.slice(0, 10).map((bolum, index) => {
+{bolumler.slice(0, bolumler.length > 10 ? 10 : bolumler.length).map((bolum, index) => {
               const stil = renkStilleri[index % renkStilleri.length];
               return (
                 <button key={bolum.id} onClick={() => setSeciliBolum(bolum)} className={`relative group ${stil.border} ${stil.hoverBorder} ${stil.bg} p-4 flex flex-col items-center justify-center text-center gap-2 transition-all overflow-hidden rounded-md`}>
