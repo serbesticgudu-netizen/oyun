@@ -30,6 +30,17 @@ type Profil = {
   is_admin: boolean
 }
 
+function normalizeKatilim(katilim: any): GorevKatilimi {
+  return {
+    gorev_id: katilim.gorev_id,
+    durum: katilim.durum,
+    kullanici_id: katilim.kullanici_id,
+    profiles: Array.isArray(katilim.profiles)
+      ? katilim.profiles[0] ?? null
+      : katilim.profiles ?? null,
+  }
+}
+
 export default function Gorevler() {
   const [gorevler, setGorevler] = useState<Gorev[]>([])
   const [kabuller, setKabuller] = useState<Kabul[]>([])
@@ -60,9 +71,11 @@ export default function Gorevler() {
         .from('gorev_kabulleri')
         .select('gorev_id, durum, kullanici_id, profiles(email)')
 
+      const normalizedKabuller = (allK ?? []).map(normalizeKatilim)
+      const myKabuller = normalizedKabuller.filter(k => k.kullanici_id === user.id).map(k => ({ gorev_id: k.gorev_id, durum: k.durum }))
+
       setGorevler(g ?? [])
-      setTumKabuller(allK ?? [])
-      const myKabuller = allK?.filter(k => k.kullanici_id === user.id) ?? []
+      setTumKabuller(normalizedKabuller)
       setKabuller(myKabuller)
       setYukleniyor(false)
     }
@@ -75,24 +88,31 @@ export default function Gorevler() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    await supabase.from('gorev_kabulleri').upsert({
+    const { data: yeniKabul, error } = await supabase.from('gorev_kabulleri').upsert({
       kullanici_id: user.id,
       gorev_id: gorevId,
       durum: 'aktif'
-    })
+    }).select('*, profiles(email)').single()
+
+    if (error) {
+      alert('Görev kabul edilirken bir hata oluştu: ' + error.message)
+      setIslem(null)
+      return
+    }
+
     await supabase.from('kisisel_arsiv').insert({
-  kullanici_id: user.id,
-  tip: 'gorev',
-  baslik: `Görev kabul edildi`,
-  aciklama: gorevler.find(g => g.id === gorevId)?.isim ?? '',
-  referans_id: gorevId,
-})
+      kullanici_id: user.id,
+      tip: 'gorev',
+      baslik: `Görev kabul edildi`,
+      aciklama: gorevler.find(g => g.id === gorevId)?.isim ?? '',
+      referans_id: gorevId,
+    })
 
     setKabuller(prev => {
-      const var_ = prev.find(k => k.gorev_id === gorevId)
-      if (var_) return prev
+      if (prev.some(k => k.gorev_id === gorevId)) return prev
       return [...prev, { gorev_id: gorevId, durum: 'aktif' }]
     })
+    setTumKabuller(prev => [...prev.filter(k => !(k.kullanici_id === user.id && k.gorev_id === gorevId)), yeniKabul as GorevKatilimi])
     setIslem(null)
   }
 

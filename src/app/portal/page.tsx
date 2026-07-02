@@ -138,6 +138,17 @@ export default function Portal() {
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400/30 group-hover:bg-violet-400 transition-all" />
             <span>Hafıza</span>
           </Link>
+          <Link href="/harita"
+            className="flex items-center gap-1.5 text-green-400/40 text-xs tracking-widest uppercase hover:text-green-400 transition-all group">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400/40 group-hover:bg-green-400 transition-all" />
+            <span>Harita</span>
+          </Link>
+          {(profil?.rol === 'kabileli' || profil?.is_admin) && (
+            <Link href="/oyun-arkadaslari" className="flex items-center gap-1.5 text-indigo-400/40 text-xs tracking-widest uppercase hover:text-indigo-400 transition-all group">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400/30 group-hover:bg-indigo-400 transition-all" />
+              <span>Arkadaşlar</span>
+            </Link>
+          )}
           <Link href="/arsiv"
             className="flex items-center gap-2 text-fuchsia-400/50 text-xs tracking-widest uppercase hover:text-fuchsia-400 transition-all border border-fuchsia-400/20 hover:border-fuchsia-400/50 px-3 py-1.5">
             <span>✦</span>
@@ -149,7 +160,7 @@ export default function Portal() {
             <span className="hidden sm:inline">Mağaza</span>
           </Link>
           {profil?.is_admin && (
-            <Link href="/admin" className="text-violet-400/40 text-xs tracking-widest uppercase hover:text-violet-400 transition-all hidden md:block">Yönetim</Link>
+            <Link href="/admin" className="text-violet-400/40 text-xs tracking-widest uppercase hover:text-violet-400 transition-all">Yönetim</Link>
           )}
           <button onClick={cikisYap} className="text-white/15 text-xs tracking-widest uppercase hover:text-white/40 transition-all">Çıkış</button>
         </div>
