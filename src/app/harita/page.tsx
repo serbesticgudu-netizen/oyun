@@ -31,6 +31,16 @@ export default function Harita() {
   const [secili, setSecili] = useState<Nokta | null>(null)
   const [tab, setTab] = useState<'mitolojik' | 'fiziksel'>('mitolojik')
   const [filtre, setFiltre] = useState<string | null>(null)
+  const [isListOpen, setIsListOpen] = useState(false)
+
+  const handleFilterClick = (tip: string | null) => {
+    if (isListOpen && filtre === tip) {
+      setIsListOpen(false)
+    } else {
+      setFiltre(tip)
+      setIsListOpen(true)
+    }
+  }
   const mapRef = useRef<HTMLDivElement>(null)
   const leafletRef = useRef<any>(null)
   const markersRef = useRef<Record<string, any>>({})
@@ -168,39 +178,35 @@ export default function Harita() {
           </Link>
         </div>
 
-        {/* Filtre bar — Mobil için kaydırılabilir */}
-        <div className="shrink-0 border-b border-white/5">
-          <div className="flex overflow-x-auto lg:grid" style={{ gridTemplateColumns: `repeat(${Object.keys(tipStil).length + 1}, 1fr)` }}>
+        {/* Filtre bar — Mobil için 2 sıra, açılır/kapanır liste */}
+        <div className="shrink-0 border-b border-white/10 bg-black/20">
+          <div className="grid grid-cols-3 lg:grid-cols-6">
             <button
-              onClick={() => setFiltre(null)}
-              className={`py-4 px-5 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 shrink-0 lg:flex-1 ${
-                !filtre ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60 hover:bg-white/5'
-              }`}
+              onClick={() => handleFilterClick(null)}
+              className="py-4 px-3 text-xs tracking-widest uppercase transition-all flex flex-col items-center gap-1.5 hover:bg-white/10"
+              style={{
+                backgroundColor: !filtre ? '#4a4a4a' : 'rgba(255,255,255,0.05)',
+                color: !filtre ? 'white' : 'rgba(255,255,255,0.6)',
+              }}
             >
               <span className="text-base">◎</span>
               <span>Tümü</span>
-              <span className="text-white/20 text-xs">({noktalar.length})</span>
+              <span className="opacity-60 text-xs">({noktalar.length})</span>
             </button>
 
             {Object.entries(tipStil).map(([tip, stil]) => (
               <button
                 key={tip}
-                onClick={() => setFiltre(filtre === tip ? null : tip)}
-                className="py-4 px-5 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 relative overflow-hidden shrink-0 lg:flex-1"
+                onClick={() => handleFilterClick(tip)}
+                className="py-4 px-3 text-xs tracking-widest uppercase transition-all flex flex-col items-center gap-1.5 relative hover:bg-white/10"
                 style={{
-                  color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.3)',
-                  background: filtre === tip ? `rgba(${stil.rgb},0.12)` : 'transparent',
+                  backgroundColor: filtre === tip ? stil.renk : 'rgba(255,255,255,0.05)',
+                  color: filtre === tip ? (tip === 'etkinlik' ? '#333' : 'white') : 'rgba(255,255,255,0.6)',
                 }}
               >
-                {filtre === tip && (
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-0.5"
-                    style={{ background: stil.renk, boxShadow: `0 0 8px ${stil.renk}` }}
-                  />
-                )}
                 <span className="text-base">{tip === 'gecit' ? '◈' : tip === 'gorev' ? '⬡' : tip === 'etkinlik' ? '◉' : tip === 'tehlike' ? '⚠' : '✦'}</span>
-                <span style={{ color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.4)' }}>{stil.etiket}</span>
-                <span style={{ color: filtre === tip ? `rgba(${stil.rgb},0.6)` : 'rgba(255,255,255,0.15)', fontSize: '10px' }}>
+                <span>{stil.etiket}</span>
+                <span className="opacity-60" style={{ fontSize: '10px' }}>
                   ({noktalar.filter(n => n.tip === tip).length})
                 </span>
               </button>
@@ -237,9 +243,9 @@ export default function Harita() {
               }
             `}</style>
 
-            {/* Sol liste — Mobil'de secim varsa gizlenir */}
-            <div className={`nokta-liste absolute top-0 left-0 bottom-0 flex-col gap-1 z-[999] p-3 overflow-y-auto ${secili ? 'hidden lg:flex' : 'flex'}`}
-              style={{ maxWidth: '260px', paddingBottom: '12px', background: 'linear-gradient(to right, rgba(0,0,0,0.6) 60%, transparent)' }}>
+            {/* Sol liste — Açılır/Kapanır */}
+            <div className={`nokta-liste absolute top-0 left-0 bottom-0 flex-col gap-1 z-[999] p-3 overflow-y-auto ${isListOpen ? 'flex' : 'hidden'}`}
+              style={{ maxWidth: '260px', paddingBottom: '12px', background: 'linear-gradient(to right, rgba(0,0,0,0.7) 60%, transparent)' }}>
               {filtrelenmis.map(nokta => {
                 const stil = tipStil[nokta.tip]
                 return (
