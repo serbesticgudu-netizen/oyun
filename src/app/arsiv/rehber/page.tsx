@@ -87,7 +87,7 @@ export default function Rehber() {
 
   return (
     <main
-      className="h-screen overflow-hidden"
+      className="h-screen flex flex-col"
       style={{
         backgroundImage: "url('/theia-bg.jpg')",
         backgroundSize: 'cover',
@@ -96,7 +96,7 @@ export default function Rehber() {
       }}
     >
       <div className="fixed inset-0 bg-black/80" />
-      <div className="relative z-10 max-w-5xl mx-auto px-8 h-full flex flex-col justify-center gap-8">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-8 w-full flex-1 flex flex-col justify-center gap-4 py-8">
 
         {/* Başlık */}
         <div className="flex flex-col items-center gap-3 text-center">
@@ -125,30 +125,90 @@ export default function Rehber() {
           <p className="text-white/20 text-center tracking-widest uppercase text-sm">Rehber henüz yazılmamış.</p>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {bolumler.slice(0, -1).map((bolum) => (
-            <button key={bolum.id} onClick={() => setSeciliBolum(bolum)} className="relative group border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center text-center gap-2 aspect-square hover:border-white/30 hover:bg-black/60 transition-all">
-              <h2 className="text-white/70 tracking-widest uppercase text-sm group-hover:text-white transition-all">{bolum.baslik}</h2>
-              {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(bolum); }} className="absolute top-2 right-2 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
-            </button>
-          ))}
+        <div className="flex-1 min-h-0 flex flex-col justify-center gap-2 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
+            {bolumler.map((bolum, index) => {
+              const isLast = index === bolumler.length - 1;
+              if (isLast) {
+                return (
+                  <div key={bolum.id} className="mt-2 md:mt-4 col-span-2 md:col-span-5">
+                    {/* Mobile */}
+                    <button onClick={() => setSeciliBolum(bolum)} className="relative md:hidden group border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center text-center gap-2 w-full hover:border-white/30 hover:bg-black/60 transition-all">
+                      <h2 className="text-white/70 tracking-widest uppercase text-sm group-hover:text-white transition-all">{bolum.baslik}</h2>
+                      {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(bolum); }} className="absolute top-2 right-2 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
+                    </button>
+                    {/* Desktop */}
+                    <div className="hidden md:flex flex-col gap-4 relative border border-white/10 bg-black/40 p-6">
+                      <h2 className="text-white tracking-widest uppercase text-lg">{bolum.baslik}</h2>
+                      <div className="w-full h-px bg-white/10" />
+                      <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{bolum.icerik}</p>
+                      {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(bolum); }} className="absolute top-4 right-4 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
+                    </div>
+                  </div>
+                )
+              }
+              return (
+                <button key={bolum.id} onClick={() => setSeciliBolum(bolum)} className="relative group border border-white/10 bg-black/40 p-4 flex flex-col items-center justify-center text-center gap-2 aspect-square hover:border-white/30 hover:bg-black/60 transition-all">
+                  <h2 className="text-white/70 tracking-widest uppercase text-xs md:text-sm group-hover:text-white transition-all">{bolum.baslik}</h2>
+                  {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(bolum); }} className="absolute top-2 right-2 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
-        {bolumler.length > 0 && (() => {
-          const sonBolum = bolumler[bolumler.length - 1];
-          return (
-            <div className="mt-4">
-              {/* Mobile */}
-              <button onClick={() => setSeciliBolum(sonBolum)} className="relative md:hidden group border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center text-center gap-2 w-full hover:border-white/30 hover:bg-black/60 transition-all">
-                <h2 className="text-white/70 tracking-widest uppercase text-sm group-hover:text-white transition-all">{sonBolum.baslik}</h2>
-                {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(sonBolum); }} className="absolute top-2 right-2 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
-              </button>
-              {/* Desktop */}
-              <div className="hidden md:flex flex-col gap-4 relative border border-white/10 bg-black/40 p-8">
-                <h2 className="text-white tracking-widest uppercase text-lg">{sonBolum.baslik}</h2>
-                <div className="w-full h-px bg-white/10" />
-                <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{sonBolum.icerik}</p>
-                {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(sonBolum); }} className="absolute top-4 right-4 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
+        <Link
+          href="/arsiv"
+          className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all text-center"
+        >
+          ← Arşive Dön
+        </Link>
+      </div>
+
+      {/* Modal */}
+      {seciliBolum && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSeciliBolum(null)}>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-2xl max-h-[90vh] bg-black border border-fuchsia-500/30 rounded-lg shadow-2xl shadow-fuchsia-500/10 flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="text-white text-xl tracking-widest uppercase">{seciliBolum.baslik}</h2>
+              <button onClick={() => setSeciliBolum(null)} className="text-white/40 hover:text-white transition-colors text-2xl">×</button>
+            </div>
+            <div className="p-8 flex-1 overflow-y-auto">
+              <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">{seciliBolum.icerik}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Edit Modal */}
+      {editingBolum && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setEditingBolum(null)}>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-2xl bg-black border border-fuchsia-500/30 rounded-lg shadow-2xl shadow-fuchsia-500/10 flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-white/10">
+              <h2 className="text-white tracking-widest uppercase">{editingBolum.id ? 'Bölümü Düzenle' : 'Yeni Bölüm Ekle'}</h2>
+            </div>
+            <div className="p-6 flex flex-col gap-4 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input value={editingBolum.baslik || ''} onChange={e => setEditingBolum({ ...editingBolum, baslik: e.target.value })} placeholder="Başlık" className="bg-black/30 border border-white/20 p-2 text-white" />
+                <input type="number" value={editingBolum.sira || 0} onChange={e => setEditingBolum({ ...editingBolum, sira: parseInt(e.target.value) || 0 })} placeholder="Sıra" className="bg-black/30 border border-white/20 p-2 text-white" />
+              </div>
+              <textarea value={editingBolum.icerik || ''} onChange={e => setEditingBolum({ ...editingBolum, icerik: e.target.value })} placeholder="İçerik" rows={12} className="bg-black/30 border border-white/20 p-2 text-white w-full resize-y" />
+            </div>
+            <div className="p-6 border-t border-white/10 flex gap-2 justify-end">
+              {editingBolum.id && (
+                <button onClick={() => handleDelete(editingBolum.id!)} disabled={isSaving} className="border border-rose-500/50 text-rose-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-rose-500/10 disabled:opacity-50">Sil</button>
+              )}
+              <button onClick={() => setEditingBolum(null)} disabled={isSaving} className="border border-white/20 text-white/60 px-4 py-2 text-xs tracking-widest uppercase hover:bg-white/10">İptal</button>
+              <button onClick={handleSave} disabled={isSaving} className="border border-emerald-500/50 text-emerald-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-emerald-500/10 disabled:opacity-50">{isSaving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  )
+}
               </div>
             </div>
           )
