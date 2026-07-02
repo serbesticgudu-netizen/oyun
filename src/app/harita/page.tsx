@@ -168,43 +168,50 @@ export default function Harita() {
           </Link>
         </div>
 
-        {/* Filtre bar — tüm genişlik, eşit kolonlar */}
-        <div className="grid shrink-0 border-b border-white/5"
-          style={{ gridTemplateColumns: `repeat(${Object.keys(tipStil).length + 1}, 1fr)` }}>
-
-          <button onClick={() => setFiltre(null)}
-            className={`py-4 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 ${
-              !filtre ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60 hover:bg-white/5'
-            }`}>
-            <span className="text-base">◎</span>
-            <span>Tümü</span>
-            <span className="text-white/20 text-xs">({noktalar.length})</span>
-          </button>
-
-          {Object.entries(tipStil).map(([tip, stil]) => (
-            <button key={tip} onClick={() => setFiltre(filtre === tip ? null : tip)}
-              className="py-4 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 relative overflow-hidden"
-              style={{
-                color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.3)',
-                background: filtre === tip ? `rgba(${stil.rgb},0.12)` : 'transparent',
-              }}>
-              {filtre === tip && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5"
-                  style={{ background: stil.renk, boxShadow: `0 0 8px ${stil.renk}` }} />
-              )}
-              <span className="text-base">{tip === 'gecit' ? '◈' : tip === 'gorev' ? '⬡' : tip === 'etkinlik' ? '◉' : tip === 'tehlike' ? '⚠' : '✦'}</span>
-              <span style={{ color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.4)' }}>{stil.etiket}</span>
-              <span style={{ color: filtre === tip ? `rgba(${stil.rgb},0.6)` : 'rgba(255,255,255,0.15)', fontSize: '10px' }}>
-                ({noktalar.filter(n => n.tip === tip).length})
-              </span>
+        {/* Filtre bar — Mobil için kaydırılabilir */}
+        <div className="shrink-0 border-b border-white/5">
+          <div className="flex overflow-x-auto lg:grid" style={{ gridTemplateColumns: `repeat(${Object.keys(tipStil).length + 1}, 1fr)` }}>
+            <button
+              onClick={() => setFiltre(null)}
+              className={`py-4 px-5 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 shrink-0 lg:flex-1 ${
+                !filtre ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60 hover:bg-white/5'
+              }`}
+            >
+              <span className="text-base">◎</span>
+              <span>Tümü</span>
+              <span className="text-white/20 text-xs">({noktalar.length})</span>
             </button>
-          ))}
+
+            {Object.entries(tipStil).map(([tip, stil]) => (
+              <button
+                key={tip}
+                onClick={() => setFiltre(filtre === tip ? null : tip)}
+                className="py-4 px-5 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 relative overflow-hidden shrink-0 lg:flex-1"
+                style={{
+                  color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.3)',
+                  background: filtre === tip ? `rgba(${stil.rgb},0.12)` : 'transparent',
+                }}
+              >
+                {filtre === tip && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-0.5"
+                    style={{ background: stil.renk, boxShadow: `0 0 8px ${stil.renk}` }}
+                  />
+                )}
+                <span className="text-base">{tip === 'gecit' ? '◈' : tip === 'gorev' ? '⬡' : tip === 'etkinlik' ? '◉' : tip === 'tehlike' ? '⚠' : '✦'}</span>
+                <span style={{ color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.4)' }}>{stil.etiket}</span>
+                <span style={{ color: filtre === tip ? `rgba(${stil.rgb},0.6)` : 'rgba(255,255,255,0.15)', fontSize: '10px' }}>
+                  ({noktalar.filter(n => n.tip === tip).length})
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Ana içerik */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
 
-          {/* Harita */}
+          {/* Harita ve Sol Liste Alanı */}
           <div className="flex-1 relative">
             <div ref={mapRef} className="w-full h-full" />
 
@@ -230,9 +237,9 @@ export default function Harita() {
               }
             `}</style>
 
-            {/* Sol liste — kategorinin üstüne kadar uzansın */}
-            <div className="nokta-liste absolute top-0 left-0 bottom-0 flex flex-col gap-1 z-[999] p-3 overflow-y-auto"
-              style={{ maxWidth: '260px', paddingBottom: '12px' }}>
+            {/* Sol liste — Mobil'de secim varsa gizlenir */}
+            <div className={`nokta-liste absolute top-0 left-0 bottom-0 flex-col gap-1 z-[999] p-3 overflow-y-auto ${secili ? 'hidden lg:flex' : 'flex'}`}
+              style={{ maxWidth: '260px', paddingBottom: '12px', background: 'linear-gradient(to right, rgba(0,0,0,0.6) 60%, transparent)' }}>
               {filtrelenmis.map(nokta => {
                 const stil = tipStil[nokta.tip]
                 return (
@@ -256,9 +263,9 @@ export default function Harita() {
             </div>
           </div>
 
-          {/* Sağ panel */}
+          {/* Sağ panel (Mobil için overlay, masaüstü için sidebar) */}
           {secili && (
-            <div className="w-96 border-l border-white/10 bg-black/80 backdrop-blur-md flex flex-col overflow-y-auto shrink-0">
+            <div className="absolute inset-0 z-[1001] flex flex-col bg-black/80 backdrop-blur-md lg:static lg:w-96 lg:border-l lg:border-white/10 lg:shrink-0 overflow-y-auto">
               <div className="p-6 border-b border-white/10 flex flex-col gap-3"
                 style={{ background: tipStil[secili.tip].bg }}>
                 <div className="flex items-start justify-between gap-4">
