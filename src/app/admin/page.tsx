@@ -30,6 +30,17 @@ type Karakter = {
   gorsel_url: string | null
 }
 
+type Gorev = {
+  id: string
+  isim: string
+}
+
+type GorevKabulu = {
+  kullanici_id: string
+  gorev_id: string
+  durum: string
+}
+
 const rolRenkleri: Record<string, string> = {
   ziyaretci: 'text-white/30 border-white/20',
   aday: 'text-amber-400 border-amber-400/30',
@@ -46,6 +57,8 @@ const durumRenkleri: Record<string, string> = {
 export default function Admin() {
   const [kullanicilar, setKullanicilar] = useState<Kullanici[]>([])
   const [karakterler, setKarakterler] = useState<Karakter[]>([])
+  const [gorevler, setGorevler] = useState<Gorev[]>([])
+  const [gorevKabulleri, setGorevKabulleri] = useState<GorevKabulu[]>([])
   const [aktifTab, setAktifTab] = useState<'kullanicilar' | 'karakterler'>('kullanicilar')
   const [seciliKarakter, setSeciliKarakter] = useState<Karakter | null>(null)
   const [editedGorselUrl, setEditedGorselUrl] = useState<string | null>('')
@@ -84,8 +97,19 @@ export default function Admin() {
         .select('*')
         .order('created_at', { ascending: false })
 
+      const { data: gor } = await supabase
+        .from('gecit_noktalari')
+        .select('id, isim')
+        .eq('tip', 'gorev')
+
+      const { data: gk } = await supabase
+        .from('gorev_kabulleri')
+        .select('*')
+
       setKullanicilar(k ?? [])
       setKarakterler(kar ?? [])
+      setGorevler(gor ?? [])
+      setGorevKabulleri(gk ?? [])
       setYukleniyor(false)
     }
 
@@ -124,6 +148,26 @@ export default function Admin() {
       setSeciliKarakter(guncelKarakter)
     }
     setIsSavingGorsel(false)
+  }
+
+  async function gorevDurumGuncelle(kullanici_id: string, gorev_id: string, yeniDurum: string) {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('gorev_kabulleri')
+      .update({ durum: yeniDurum })
+      .match({ kullanici_id, gorev_id })
+      .select()
+      .single()
+
+    if (error) {
+      alert('Hata: ' + error.message)
+    } else if (data) {
+      setGorevKabulleri(prev => prev.map(k =>
+        (k.kullanici_id === kullanici_id && k.gorev_id === gorev_id)
+          ? data as GorevKabulu
+          : k
+      ))
+    }
   }
 
   if (yukleniyor) return (
@@ -222,6 +266,11 @@ export default function Admin() {
 
             {/* Detay */}
             {seciliKarakter && (
+              (() => {
+                const kullaniciGorevleri = gorevKabulleri.filter(
+                  k => k.kullanici_id === seciliKarakter.kullanici_id
+                );
+              return (
               <div className="border border-white/10 bg-white/5 p-6 flex flex-col gap-5 max-h-screen overflow-y-auto">
                 <div className="flex items-center justify-between">
                   <h2 className="text-white tracking-widest uppercase">
@@ -273,6 +322,36 @@ export default function Admin() {
                   </span>
                 </div>
 
+                <div className="w-full h-px bg-white/10" />
+
+                {/* Görevler */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-white/30 text-xs tracking-widest uppercase">Kabul Edilen Görevler</span>
+                  {kullaniciGorevleri.length > 0 ? (
+                    <div className="flex flex-col gap-2">
+                      {kullaniciGorevleri.map(kabul => {
+                        const gorev = gorevler.find(g => g.id === kabul.gorev_id);
+                        if (!gorev) return null;
+                        return (
+                          <div key={kabul.gorev_id} className="flex items-center justify-between gap-2 text-sm">
+                            <span className="text-white/60">{gorev.isim}</span>
+                            <select
+                              value={kabul.durum}
+                              onChange={e => gorevDurumGuncelle(seciliKarakter.kullanici_id, kabul.gorev_id, e.target.value)}
+                              className="bg-black border border-white/20 text-white/60 text-xs tracking-wider px-2 py-1 focus:outline-none focus:border-white/40"
+                            >
+                              <option value="aktif">Aktif</option>
+                              <option value="tamamlandi">Tamamlandı</option>
+                            </select>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-white/30 text-xs">Henüz görev kabul edilmemiş.</p>
+                  )}
+                </div>
+
                 {/* Form verisi */}
                 {seciliKarakter.olusturma_yontemi === 'form' && (
                   <>
@@ -305,6 +384,8 @@ export default function Admin() {
                   </div>
                 )}
               </div>
+              )
+            })()
             )}
           </div>
         )}
