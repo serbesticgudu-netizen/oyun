@@ -18,6 +18,9 @@ export default function Portal() {
   const [yukleniyor, setYukleniyor] = useState(true)
   const [ayFazi, setAyFazi] = useState<AyFazi | null>(null)
   const [aktifPanel, setAktifPanel] = useState<'hikaye' | 'gucler' | 'motivasyon'>('hikaye')
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedKarakter, setEditedKarakter] = useState<Partial<Karakter> | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -40,6 +43,40 @@ export default function Portal() {
     const supabase = createClient()
     await supabase.auth.signOut()
     window.location.href = '/'
+  }
+
+  function handleEditToggle() {
+    if (!isEditing) {
+      setEditedKarakter(karakter)
+    } else {
+      setEditedKarakter(null)
+    }
+    setIsEditing(!isEditing)
+  }
+
+  async function handleSave() {
+    if (!editedKarakter || !karakter) return
+    setIsSaving(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('karakterler')
+      .update({
+        koken_hikayesi: editedKarakter.koken_hikayesi,
+        gucler: editedKarakter.gucler,
+        zayifliklar: editedKarakter.zayifliklar,
+        motivasyon: editedKarakter.motivasyon,
+      })
+      .eq('id', karakter.id)
+      .select()
+      .single()
+
+    if (error) {
+      alert('Kaydederken bir hata oluştu: ' + error.message)
+    } else if (data) {
+      setKarakter(data as Karakter)
+      setIsEditing(false)
+    }
+    setIsSaving(false)
   }
 
   if (yukleniyor) return (
@@ -147,7 +184,7 @@ export default function Portal() {
           {karakter ? (
             <>
               <div className="flex flex-col sm:flex-row sm:items-baseline gap-2 sm:gap-6">
-                <h1 className="text-3xl md:text-4xl font-thin tracking-[0.2em] uppercase text-white"
+                <h1 className="text-3xl md:text-4xl font-thin tracking-[0.2em] uppercase text-white flex-1"
                   style={{ textShadow: ayFazi?.dolunayMi ? '0 0 30px rgba(250,204,21,0.5)' : '0 0 30px rgba(168,85,247,0.4)' }}>
                   {karakter.karakter_adi}
                 </h1>
@@ -161,6 +198,22 @@ export default function Portal() {
                     {karakter.durum === 'tamamlandi' ? 'Hazır' : 'Beklemede'}
                   </span>
                 </div>
+                {profil?.is_admin && (
+                  <div className="flex items-center gap-2">
+                    {isEditing ? (
+                      <>
+                        <button onClick={handleSave} disabled={isSaving} className="border border-emerald-500/50 text-emerald-400/80 px-3 py-1 text-xs tracking-widest uppercase hover:bg-emerald-500/10 disabled:opacity-50 transition-all">
+                          {isSaving ? '...' : 'Kaydet'}
+                        </button>
+                        <button onClick={handleEditToggle} className="border border-rose-500/50 text-rose-400/80 px-3 py-1 text-xs tracking-widest uppercase hover:bg-rose-500/10 transition-all">
+                          İptal
+                        </button>
+                      </>
+                    ) : (
+                      <button onClick={handleEditToggle} className="border border-white/20 text-white/60 px-3 py-1 text-xs tracking-widest uppercase hover:border-white/40 hover:text-white transition-all">Düzenle</button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Tab seçici */}
@@ -185,27 +238,55 @@ export default function Portal() {
 
               {/* Tab içerik */}
               <div className="flex-1 py-2 overflow-y-auto">
-                {aktifPanel === 'hikaye' && karakter.koken_hikayesi && (
-                  <p className="text-white/40 text-sm leading-relaxed max-w-2xl">{karakter.koken_hikayesi}</p>
+                {aktifPanel === 'hikaye' && (
+                  isEditing && editedKarakter ? (
+                    <textarea
+                      value={editedKarakter.koken_hikayesi || ''}
+                      onChange={e => setEditedKarakter({ ...editedKarakter, koken_hikayesi: e.target.value })}
+                      className="w-full max-w-2xl h-48 bg-black/30 border border-fuchsia-500/30 p-3 text-white/60 text-sm leading-relaxed focus:outline-none focus:border-fuchsia-500/60 transition-all"
+                      placeholder="Köken hikayesi..."
+                    />
+                  ) : (
+                    karakter.koken_hikayesi && <p className="text-white/40 text-sm leading-relaxed max-w-2xl">{karakter.koken_hikayesi}</p>
+                  )
                 )}
                 {aktifPanel === 'gucler' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 max-w-2xl">
-                    {karakter.gucler && (
-                      <div>
-                        <p className="text-cyan-400/30 text-xs tracking-[0.4em] uppercase mb-3">Güçler</p>
-                        <p className="text-white/40 text-xs leading-relaxed">{karakter.gucler}</p>
-                      </div>
-                    )}
-                    {karakter.zayifliklar && (
-                      <div>
-                        <p className="text-rose-400/30 text-xs tracking-[0.4em] uppercase mb-3">Zayıflıklar</p>
-                        <p className="text-white/40 text-xs leading-relaxed">{karakter.zayifliklar}</p>
-                      </div>
+                    {isEditing && editedKarakter ? (
+                      <>
+                        <div>
+                          <p className="text-cyan-400/30 text-xs tracking-[0.4em] uppercase mb-3">Güçler</p>
+                          <textarea value={editedKarakter.gucler || ''} onChange={e => setEditedKarakter({ ...editedKarakter, gucler: e.target.value })} className="w-full h-32 bg-black/30 border border-cyan-500/30 p-3 text-white/60 text-xs leading-relaxed focus:outline-none focus:border-cyan-500/60 transition-all" placeholder="Güçler..." />
+                        </div>
+                        <div>
+                          <p className="text-rose-400/30 text-xs tracking-[0.4em] uppercase mb-3">Zayıflıklar</p>
+                          <textarea value={editedKarakter.zayifliklar || ''} onChange={e => setEditedKarakter({ ...editedKarakter, zayifliklar: e.target.value })} className="w-full h-32 bg-black/30 border border-rose-500/30 p-3 text-white/60 text-xs leading-relaxed focus:outline-none focus:border-rose-500/60 transition-all" placeholder="Zayıflıklar..." />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {karakter.gucler && (
+                          <div>
+                            <p className="text-cyan-400/30 text-xs tracking-[0.4em] uppercase mb-3">Güçler</p>
+                            <p className="text-white/40 text-xs leading-relaxed">{karakter.gucler}</p>
+                          </div>
+                        )}
+                        {karakter.zayifliklar && (
+                          <div>
+                            <p className="text-rose-400/30 text-xs tracking-[0.4em] uppercase mb-3">Zayıflıklar</p>
+                            <p className="text-white/40 text-xs leading-relaxed">{karakter.zayifliklar}</p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
-                {aktifPanel === 'motivasyon' && karakter.motivasyon && (
-                  <p className="text-white/40 text-sm leading-relaxed italic max-w-2xl">{karakter.motivasyon}</p>
+                {aktifPanel === 'motivasyon' && (
+                  isEditing && editedKarakter ? (
+                    <textarea value={editedKarakter.motivasyon || ''} onChange={e => setEditedKarakter({ ...editedKarakter, motivasyon: e.target.value })} className="w-full max-w-2xl h-32 bg-black/30 border border-amber-500/30 p-3 text-white/60 text-sm leading-relaxed italic focus:outline-none focus:border-amber-500/60 transition-all" placeholder="Motivasyon..." />
+                  ) : (
+                    karakter.motivasyon && <p className="text-white/40 text-sm leading-relaxed italic max-w-2xl">{karakter.motivasyon}</p>
+                  )
                 )}
               </div>
 
