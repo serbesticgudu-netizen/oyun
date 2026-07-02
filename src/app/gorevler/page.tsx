@@ -12,10 +12,13 @@ type Gorev = {
   durum: 'uyku' | 'aktif' | 'kapali'
   simge: string
 }
-
 type Kabul = {
   gorev_id: string
   durum: string
+}
+
+type Profil = {
+  is_admin: boolean
 }
 
 export default function Gorevler() {
@@ -24,12 +27,18 @@ export default function Gorevler() {
   const [acik, setAcik] = useState<string | null>(null)
   const [yukleniyor, setYukleniyor] = useState(true)
   const [islem, setIslem] = useState<string | null>(null)
+  const [profil, setProfil] = useState<Profil | null>(null)
+  const [editingGorev, setEditingGorev] = useState<Partial<Gorev> | null>(null)
+  const [isFormSaving, setIsFormSaving] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
     async function yukle() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/giris'; return }
+
+      const { data: p } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
+      setProfil(p)
 
       const { data: g } = await supabase
         .from('gecit_noktalari')
@@ -76,6 +85,64 @@ export default function Gorevler() {
     setIslem(null)
   }
 
+  function handleEdit(gorev: Gorev) {
+    setEditingGorev({ ...gorev })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function handleSave() {
+    if (!editingGorev) return
+    setIsFormSaving(true)
+    const supabase = createClient()
+
+    const gorevData = {
+      isim: editingGorev.isim,
+      mitolojik_gecmis: editingGorev.mitolojik_gecmis,
+      fiziksel_gecmis: editingGorev.fiziksel_gecmis,
+      durum: editingGorev.durum,
+      simge: editingGorev.simge,
+      tip: 'gorev',
+      // Harita noktası için zorunlu alanlar, görevler için şimdilik varsayılan olabilir
+      koordinat_lat: (editingGorev as any).koordinat_lat || 0,
+      koordinat_lng: (editingGorev as any).koordinat_lng || 0,
+    }
+
+    const { data, error } = editingGorev.id
+      ? await supabase.from('gecit_noktalari').update(gorevData).eq('id', editingGorev.id).select().single()
+      : await supabase.from('gecit_noktalari').insert(gorevData).select().single()
+
+    if (error) {
+      alert('Hata: ' + error.message)
+    } else if (data) {
+      const newGorev = data as Gorev
+      if (editingGorev.id) {
+        setGorevler(prev => prev.map(g => g.id === newGorev.id ? newGorev : g))
+      } else {
+        setGorevler(prev => [...prev, newGorev].sort((a, b) => a.isim.localeCompare(b.isim)))
+      }
+      setEditingGorev(null)
+    }
+    setIsFormSaving(false)
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm('Bu görevi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return
+
+    // İlgili kabulleri de silmek gerekebilir, RLS ile cascade delete ayarlanabilir.
+    // Şimdilik sadece görevi siliyoruz.
+    const supabase = createClient()
+    const { error } = await supabase.from('gecit_noktalari').delete().eq('id', id)
+
+    if (error) {
+      alert('Hata: ' + error.message)
+    } else {
+      setGorevler(prev => prev.filter(g => g.id !== id))
+      if (editingGorev?.id === id) {
+        setEditingGorev(null)
+      }
+    }
+  }
+
   const kabulEdildi = (id: string) => kabuller.some(k => k.gorev_id === id)
 
   if (yukleniyor) return (
@@ -106,10 +173,52 @@ export default function Gorevler() {
               {kabuller.length > 0 ? `${kabuller.length} görev kabul edildi` : 'Bir görevi kabul etmek için tıkla'}
             </p>
           </div>
-          <Link href="/portal" className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all">
-            ← Portal
-          </Link>
+          <div className="flex items-center gap-4">
+            {profil?.is_admin && !editingGorev && (
+              <button
+                onClick={() => setEditingGorev({ isim: '', mitolojik_gecmis: '', durum: 'uyku', simge: '⬡' })}
+                className="border border-emerald-500/50 text-emerald-400/80 px-3 py-1.5 text-xs tracking-widest uppercase hover:bg-emerald-500/10 transition-all"
+              >
+                + Yeni Görev
+              </button>
+            )}
+            <Link href="/portal" className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all">
+              ← Portal
+            </Link>
+          </div>
         </div>
+
+        {/* DÜZENLEME FORMU */}
+        {editingGorev && (
+          <div className="flex flex-col gap-4 border border-fuchsia-500/30 p-6 bg-black/40 rounded-lg">
+            <h2 className="text-white tracking-widest uppercase">{editingGorev.id ? 'Görevi Düzenle' : 'Yeni Görev Ekle'}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input value={editingGorev.isim} onChange={e => setEditingGorev({ ...editingGorev, isim: e.target.value })} placeholder="Görev Adı" className="bg-black/30 border border-white/20 p-2 text-white" />
+              <input value={editingGorev.simge} onChange={e => setEditingGorev({ ...editingGorev, simge: e.target.value })} placeholder="Simge (Emoji)" className="bg-black/30 border border-white/20 p-2 text-white" />
+              <select value={editingGorev.durum} onChange={e => setEditingGorev({ ...editingGorev, durum: e.target.value as Gorev['durum'] })} className="bg-black/30 border border-white/20 p-2 text-white">
+                <option value="uyku">Uykuda</option>
+                <option value="aktif">Aktif</option>
+                <option value="kapali">Kapalı</option>
+              </select>
+            </div>
+            <textarea value={editingGorev.mitolojik_gecmis} onChange={e => setEditingGorev({ ...editingGorev, mitolojik_gecmis: e.target.value })} placeholder="Görev Tanımı (Mitolojik Geçmiş)" rows={4} className="bg-black/30 border border-white/20 p-2 text-white w-full resize-y" />
+            <textarea value={editingGorev.fiziksel_gecmis} onChange={e => setEditingGorev({ ...editingGorev, fiziksel_gecmis: e.target.value })} placeholder="Fiziksel Konum / İpucu" rows={2} className="bg-black/30 border border-white/20 p-2 text-white w-full resize-y" />
+            <div className="flex gap-2 justify-end">
+              {editingGorev.id && (
+                <button onClick={() => handleDelete(editingGorev.id!)} disabled={isFormSaving} className="border border-rose-500/50 text-rose-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-rose-500/10 disabled:opacity-50">
+                  Sil
+                </button>
+              )}
+              <button onClick={() => setEditingGorev(null)} disabled={isFormSaving} className="border border-white/20 text-white/60 px-4 py-2 text-xs tracking-widest uppercase hover:bg-white/10">
+                İptal
+              </button>
+              <button onClick={handleSave} disabled={isFormSaving} className="border border-emerald-500/50 text-emerald-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-emerald-500/10 disabled:opacity-50">
+                {isFormSaving ? 'Kaydediliyor...' : 'Kaydet'}
+              </button>
+            </div>
+          </div>
+        )}
+
 
         {/* Görev kartları */}
         {gorevler.length === 0 ? (
@@ -183,6 +292,13 @@ export default function Gorevler() {
                               </p>
                             </div>
 
+                            {profil?.is_admin && !editingGorev && (
+                              <div className="absolute top-2 right-2 z-10 flex gap-1">
+                                <button onClick={(e) => { e.stopPropagation(); handleEdit(gorev); }} className="text-cyan-400/60 hover:text-cyan-400 text-xs uppercase tracking-widest p-1 bg-black/50 rounded">
+                                  Düzenle
+                                </button>
+                              </div>
+                            )}
                             {/* Kabul rozeti */}
                             {kabul && (
                               <div className="absolute top-3 right-3">

@@ -59,11 +59,11 @@ export default function Admin() {
 
       const { data: profil } = await supabase
         .from('profiles')
-        .select('rol')
+        .select('is_admin')
         .eq('id', user.id)
         .single()
 
-      if (profil?.rol !== 'kabileli') { router.push('/portal'); return }
+      if (!profil?.is_admin) { router.push('/portal'); return }
 
       const { data: k } = await supabase
         .from('profiles')
