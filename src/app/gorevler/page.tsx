@@ -17,6 +17,15 @@ type Kabul = {
   durum: string
 }
 
+type GorevKatilimi = {
+  gorev_id: string
+  durum: string
+  kullanici_id: string
+  profiles: {
+    email: string
+  } | null
+}
+
 type Profil = {
   is_admin: boolean
 }
@@ -24,6 +33,7 @@ type Profil = {
 export default function Gorevler() {
   const [gorevler, setGorevler] = useState<Gorev[]>([])
   const [kabuller, setKabuller] = useState<Kabul[]>([])
+  const [tumKabuller, setTumKabuller] = useState<GorevKatilimi[]>([])
   const [acik, setAcik] = useState<string | null>(null)
   const [yukleniyor, setYukleniyor] = useState(true)
   const [islem, setIslem] = useState<string | null>(null)
@@ -46,13 +56,14 @@ export default function Gorevler() {
         .eq('tip', 'gorev')
         .order('isim')
 
-      const { data: k } = await supabase
+      const { data: allK } = await supabase
         .from('gorev_kabulleri')
-        .select('gorev_id, durum')
-        .eq('kullanici_id', user.id)
+        .select('gorev_id, durum, kullanici_id, profiles(email)')
 
       setGorevler(g ?? [])
-      setKabuller(k ?? [])
+      setTumKabuller(allK ?? [])
+      const myKabuller = allK?.filter(k => k.kullanici_id === user.id) ?? []
+      setKabuller(myKabuller)
       setYukleniyor(false)
     }
     yukle()
@@ -145,6 +156,12 @@ export default function Gorevler() {
 
   const kabulEdildi = (id: string) => kabuller.some(k => k.gorev_id === id)
 
+  const tamamlananGorevIds = new Set(tumKabuller.filter(k => k.durum === 'tamamlandi').map(k => k.gorev_id))
+
+  const yapilacakGorevler = gorevler.filter(g => !tamamlananGorevIds.has(g.id))
+  const tamamlananGorevler = gorevler.filter(g => tamamlananGorevIds.has(g.id))
+
+
   if (yukleniyor) return (
     <main className="min-h-screen bg-black flex items-center justify-center">
       <p className="text-white/20 text-xs tracking-widest uppercase">Görevler yükleniyor...</p>
@@ -221,21 +238,29 @@ export default function Gorevler() {
 
 
         {/* Görev kartları */}
-        {gorevler.length === 0 ? (
+        {yapilacakGorevler.length === 0 && tamamlananGorevler.length === 0 ? (
           <p className="text-white/20 text-center tracking-widest uppercase text-sm py-20">
             Henüz görev eklenmemiş.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {gorevler.map(gorev => {
+            {yapilacakGorevler.map(gorev => {
               const kabul = kabulEdildi(gorev.id)
               const acikMi = acik === gorev.id
+              const kabulEdenler = tumKabuller.filter(k => k.gorev_id === gorev.id && k.durum === 'aktif')
 
               return (
                 <div key={gorev.id}
                   onClick={() => {
+                    if (!kabul) {
+                      if (gorev.durum === 'kapali') {
+                        if (!window.confirm(`Bu görev ${kabulEdenler.length} kullanıcı tarafından seçilmiş durumda, siz de bu görevi kendiniz için aktifleştirmek istediğinize emin misiniz?`)) {
+                          return
+                        }
+                      }
+                      gorevKabul(gorev.id)
+                    }
                     setAcik(acikMi ? null : gorev.id)
-                    if (!kabul) gorevKabul(gorev.id)
                   }}
                   className="relative cursor-pointer transition-all duration-500 group"
                   style={{ perspective: '1000px' }}>
@@ -290,6 +315,9 @@ export default function Gorevler() {
                               <p className="text-white/10 text-xs tracking-widest text-center group-hover:text-white/20 transition-all">
                                 Açmak için tıkla
                               </p>
+                              {kabulEdenler.length > 0 && !kabul && (
+                                <p className="text-cyan-400/30 text-xs mt-2">{kabulEdenler.length} kullanıcı için aktif</p>
+                              )}
                             </div>
 
                             {profil?.is_admin && !editingGorev && (
@@ -352,6 +380,37 @@ export default function Gorevler() {
               )
             })}
           </div>
+        )}
+
+        {/* TAMAMLANMIŞ GÖREVLER */}
+        {tamamlananGorevler.length > 0 && (
+          <>
+            <div className="flex items-center gap-4 mt-16">
+              <h2 className="text-white/40 text-lg tracking-widest uppercase">Tamamlanmış Görevler</h2>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tamamlananGorevler.map(gorev => {
+                const tamamlayanlar = tumKabuller.filter(k => k.gorev_id === gorev.id && k.durum === 'tamamlandi')
+                return (
+                  <div key={gorev.id} className="relative border border-emerald-500/20 bg-black/60 p-6 flex flex-col gap-4 opacity-70">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-emerald-400/50 text-xs tracking-[0.4em] uppercase">✓ Tamamlandı</span>
+                        <h3 className="text-white/70 text-lg tracking-wider">{gorev.isim}</h3>
+                      </div>
+                      <span className="text-3xl opacity-20 shrink-0">{gorev.simge}</span>
+                    </div>
+                    <div className="h-px bg-emerald-500/20" />
+                    <div className="flex flex-col gap-1">
+                      <p className="text-white/30 text-xs tracking-widest uppercase">Tamamlayanlar</p>
+                      <p className="text-white/50 text-sm">{tamamlayanlar.map(k => k.profiles?.email || 'Bilinmeyen').join(', ')}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
 

@@ -12,6 +12,13 @@ type ArsivKaydi = {
   created_at: string
 }
 
+type Gorev = {
+  id: string
+  isim: string
+  mitolojik_gecmis: string
+  simge: string
+}
+
 const tipStil: Record<string, { renk: string; ikon: string; etiket: string }> = {
   tablet:  { renk: '#a855f7', ikon: '𐀏', etiket: 'Tablet' },
   gorev:   { renk: '#22d3ee', ikon: '⬡', etiket: 'Görev' },
@@ -23,6 +30,8 @@ const tipStil: Record<string, { renk: string; ikon: string; etiket: string }> = 
 export default function KisiselArsiv() {
   const [kayitlar, setKayitlar] = useState<ArsivKaydi[]>([])
   const [yukleniyor, setYukleniyor] = useState(true)
+  const [aktifGorevler, setAktifGorevler] = useState<Gorev[]>([])
+  const [tamamlananGorevler, setTamamlananGorevler] = useState<Gorev[]>([])
   const [filtre, setFiltre] = useState<string | null>(null)
 
   useEffect(() => {
@@ -30,12 +39,35 @@ export default function KisiselArsiv() {
     async function yukle() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/giris'; return }
-      const { data } = await supabase
+
+      const { data: arsivData } = await supabase
         .from('kisisel_arsiv')
         .select('*')
         .eq('kullanici_id', user.id)
         .order('created_at', { ascending: false })
-      setKayitlar(data ?? [])
+      setKayitlar(arsivData ?? [])
+
+      const { data: gorevlerData } = await supabase
+        .from('gecit_noktalari')
+        .select('id, isim, mitolojik_gecmis, simge')
+        .eq('tip', 'gorev')
+
+      const { data: kabullerData } = await supabase
+        .from('gorev_kabulleri')
+        .select('gorev_id, durum')
+        .eq('kullanici_id', user.id)
+
+      if (gorevlerData && kabullerData) {
+        const aktif = kabullerData
+          .filter(k => k.durum === 'aktif')
+          .map(k => gorevlerData.find(g => g.id === k.gorev_id)).filter(Boolean) as Gorev[]
+        const tamamlanan = kabullerData
+          .filter(k => k.durum === 'tamamlandi')
+          .map(k => gorevlerData.find(g => g.id === k.gorev_id)).filter(Boolean) as Gorev[]
+        setAktifGorevler(aktif)
+        setTamamlananGorevler(tamamlanan)
+      }
+
       setYukleniyor(false)
     }
     yukle()
@@ -73,6 +105,51 @@ export default function KisiselArsiv() {
           </div>
           <Link href="/portal" className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all">← Portal</Link>
         </div>
+
+        {/* Görevler */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Aktif Görevler */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-cyan-400/50 text-sm tracking-[0.3em] uppercase">Aktif Görevler</h2>
+            {aktifGorevler.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {aktifGorevler.map(gorev => (
+                  <Link href="/gorevler" key={gorev.id} className="border border-cyan-400/20 bg-cyan-900/10 p-4 flex items-center gap-4 hover:bg-cyan-900/20 transition-all">
+                    <span className="text-cyan-400/70 text-2xl">{gorev.simge}</span>
+                    <div className="flex flex-col">
+                      <span className="text-white/80 tracking-wider">{gorev.isim}</span>
+                      <span className="text-white/30 text-xs">Devam ediyor...</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-white/20 text-xs tracking-wider p-4 border border-dashed border-white/10">Aktif görevin yok.</p>
+            )}
+          </div>
+
+          {/* Tamamlanmış Görevler */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-emerald-400/50 text-sm tracking-[0.3em] uppercase">Tamamlanmış Görevler</h2>
+            {tamamlananGorevler.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {tamamlananGorevler.map(gorev => (
+                  <div key={gorev.id} className="border border-emerald-400/20 bg-emerald-900/10 p-4 flex items-center gap-4 opacity-70">
+                    <span className="text-emerald-400/70 text-2xl">{gorev.simge}</span>
+                    <div className="flex flex-col">
+                      <span className="text-white/80 tracking-wider">{gorev.isim}</span>
+                      <span className="text-white/30 text-xs">✓ Tamamlandı</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-white/20 text-xs tracking-wider p-4 border border-dashed border-white/10">Henüz görev tamamlamadın.</p>
+            )}
+          </div>
+        </div>
+
+        <h2 className="text-fuchsia-400/30 text-sm tracking-[0.3em] uppercase pt-8 border-t border-fuchsia-500/10">Hafıza Akışı</h2>
 
         {/* Filtreler */}
         <div className="flex flex-wrap gap-2">
