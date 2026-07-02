@@ -142,12 +142,6 @@ export default function Rehber() {
 
         <div className="flex-1 min-h-0 flex flex-col gap-2 md:gap-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 flex-grow">
-            {bolumler.slice(0, -1).map((bolum) => (
-              <button key={bolum.id} onClick={() => setSeciliBolum(bolum)} className="relative group border border-white/10 bg-black/40 p-4 flex flex-col items-center justify-center text-center gap-2 hover:border-white/30 hover:bg-black/60 transition-all">
-                <h2 className="text-white/70 tracking-widest uppercase text-xs md:text-sm group-hover:text-white transition-all">{bolum.baslik}</h2>
-                {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(bolum); }} className="absolute top-2 right-2 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
-              </button>
-            ))}
             {bolumler.slice(0, 10).map((bolum, index) => {
               const stil = renkStilleri[index % renkStilleri.length];
               return (
