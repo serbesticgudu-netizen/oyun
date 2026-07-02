@@ -43,7 +43,7 @@ export default function OyunArkadaslari() {
   const [yukleniyor, setYukleniyor] = useState(true)
   const [seciliKarakter, setSeciliKarakter] = useState<Karakter | null>(null)
   const [aramaMetni, setAramaMetni] = useState('')
-  const [filtre, setFiltre] = useState<{ tip: 'koken' | 'tur'; deger: string } | null>(null)
+  const [filtreliKoken, setFiltreliKoken] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -82,18 +82,12 @@ export default function OyunArkadaslari() {
   const getSahip = (kullanici_id: string) => profiller.find(p => p.id === kullanici_id)
 
   const tumKokenler = [...new Set(karakterler.map(k => k.koken).filter(Boolean))]
-  const tumTurler = [...new Set(karakterler.map(k => k.tur).filter(Boolean))]
 
   const filtrelenmisKarakterler = karakterler.filter(k => {
     const aramaEslesmesi = aramaMetni.trim() === '' || k.karakter_adi.toLowerCase().includes(aramaMetni.toLowerCase())
+    const kokenEslesmesi = !filtreliKoken || k.koken === filtreliKoken
 
-    const filtreEslesmesi = !filtre || (
-      filtre.tip === 'koken'
-        ? k.koken === filtre.deger
-        : k.tur === filtre.deger
-    )
-
-    return aramaEslesmesi && filtreEslesmesi
+    return aramaEslesmesi && kokenEslesmesi
   })
 
   return (
@@ -125,19 +119,13 @@ export default function OyunArkadaslari() {
             className="flex-1 bg-black/30 border border-white/10 px-4 py-2 text-white placeholder-white/30 focus:outline-none focus:border-fuchsia-500/50"
           />
           <div className="flex gap-2 flex-wrap">
-            <button onClick={() => setFiltre(null)} className={`px-3 py-1.5 text-xs tracking-widest uppercase border transition-all ${!filtre ? 'border-white/40 text-white bg-white/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
+            <button onClick={() => setFiltreliKoken(null)} className={`px-3 py-1.5 text-xs tracking-widest uppercase border transition-all ${!filtreliKoken ? 'border-white/40 text-white bg-white/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
               Tümü
             </button>
             {tumKokenler.map(koken => (
-              <button key={koken} onClick={() => setFiltre(filtre?.deger === koken ? null : { tip: 'koken', deger: koken })}
-                className={`px-3 py-1.5 text-xs tracking-widest uppercase border transition-all ${filtre?.deger === koken ? 'border-cyan-400/60 text-cyan-300 bg-cyan-500/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
+              <button key={koken} onClick={() => setFiltreliKoken(filtreliKoken === koken ? null : koken)}
+                className={`px-3 py-1.5 text-xs tracking-widest uppercase border transition-all ${filtreliKoken === koken ? 'border-cyan-400/60 text-cyan-300 bg-cyan-500/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
                 {koken}
-              </button>
-            ))}
-            {tumTurler.map(tur => (
-              <button key={tur} onClick={() => setFiltre(filtre?.deger === tur ? null : { tip: 'tur', deger: tur })}
-                className={`px-3 py-1.5 text-xs tracking-widest uppercase border transition-all ${filtre?.deger === tur ? 'border-amber-400/60 text-amber-300 bg-amber-500/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
-                {tur}
               </button>
             ))}
           </div>
@@ -150,7 +138,7 @@ export default function OyunArkadaslari() {
               <button key={karakter.id} onClick={() => setSeciliKarakter(karakter)} className="group flex flex-col gap-3 text-left">
                 <div className="relative aspect-square w-full bg-black/20 border border-white/10 rounded-md overflow-hidden group-hover:border-fuchsia-400/50 transition-all">
                   {karakter.gorsel_url ? (
-                    <img src={karakter.gorsel_url} alt={karakter.karakter_adi} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src={karakter.gorsel_url} alt={karakter.karakter_adi} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-fuchsia-400/20 text-4xl">✦</span>
