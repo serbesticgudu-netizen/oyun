@@ -61,6 +61,8 @@ export default function Portal() {
     const { data, error } = await supabase
       .from('karakterler')
       .update({
+        tur: editedKarakter.tur,
+        koken: editedKarakter.koken,
         koken_hikayesi: editedKarakter.koken_hikayesi,
         gucler: editedKarakter.gucler,
         zayifliklar: editedKarakter.zayifliklar,
@@ -189,8 +191,17 @@ export default function Portal() {
                   {karakter.karakter_adi}
                 </h1>
                 <div className="flex items-center gap-4 flex-wrap">
-                  {karakter.tur && <span className="text-white/20 text-xs tracking-widest">{karakter.tur}</span>}
-                  {karakter.koken && <span className="text-cyan-400/30 text-xs tracking-widest">{karakter.koken}</span>}
+                  {isEditing && editedKarakter ? (
+                    <>
+                      <input value={editedKarakter.tur || ''} onChange={e => setEditedKarakter({ ...editedKarakter, tur: e.target.value })} placeholder="Tür" className="bg-black/30 border border-white/20 px-2 py-1 text-white/60 text-xs tracking-widest" />
+                      <input value={editedKarakter.koken || ''} onChange={e => setEditedKarakter({ ...editedKarakter, koken: e.target.value })} placeholder="Köken" className="bg-black/30 border border-white/20 px-2 py-1 text-white/60 text-xs tracking-widest" />
+                    </>
+                  ) : (
+                    <>
+                      {karakter.tur && <span className="text-white/20 text-xs tracking-widest">{karakter.tur}</span>}
+                      {karakter.koken && <span className="text-cyan-400/30 text-xs tracking-widest">{karakter.koken}</span>}
+                    </>
+                  )}
                   <span className={`flex items-center gap-1.5 text-xs tracking-widest uppercase ${
                     karakter.durum === 'tamamlandi' ? 'text-emerald-400/60' : 'text-amber-400/50'
                   }`}>
@@ -247,7 +258,7 @@ export default function Portal() {
                       placeholder="Köken hikayesi..."
                     />
                   ) : (
-                    karakter.koken_hikayesi && <p className="text-white/40 text-sm leading-relaxed max-w-2xl">{karakter.koken_hikayesi}</p>
+                    karakter.koken_hikayesi && <p className="text-white/40 text-sm leading-relaxed max-w-2xl whitespace-pre-line">{karakter.koken_hikayesi}</p>
                   )
                 )}
                 {aktifPanel === 'gucler' && (
@@ -268,13 +279,13 @@ export default function Portal() {
                         {karakter.gucler && (
                           <div>
                             <p className="text-cyan-400/30 text-xs tracking-[0.4em] uppercase mb-3">Güçler</p>
-                            <p className="text-white/40 text-xs leading-relaxed">{karakter.gucler}</p>
+                            <p className="text-white/40 text-xs leading-relaxed whitespace-pre-line">{karakter.gucler}</p>
                           </div>
                         )}
                         {karakter.zayifliklar && (
                           <div>
                             <p className="text-rose-400/30 text-xs tracking-[0.4em] uppercase mb-3">Zayıflıklar</p>
-                            <p className="text-white/40 text-xs leading-relaxed">{karakter.zayifliklar}</p>
+                            <p className="text-white/40 text-xs leading-relaxed whitespace-pre-line">{karakter.zayifliklar}</p>
                           </div>
                         )}
                       </>
@@ -285,7 +296,7 @@ export default function Portal() {
                   isEditing && editedKarakter ? (
                     <textarea value={editedKarakter.motivasyon || ''} onChange={e => setEditedKarakter({ ...editedKarakter, motivasyon: e.target.value })} className="w-full max-w-2xl h-32 bg-black/30 border border-amber-500/30 p-3 text-white/60 text-sm leading-relaxed italic focus:outline-none focus:border-amber-500/60 transition-all" placeholder="Motivasyon..." />
                   ) : (
-                    karakter.motivasyon && <p className="text-white/40 text-sm leading-relaxed italic max-w-2xl">{karakter.motivasyon}</p>
+                    karakter.motivasyon && <p className="text-white/40 text-sm leading-relaxed italic max-w-2xl whitespace-pre-line">{karakter.motivasyon}</p>
                   )
                 )}
               </div>
