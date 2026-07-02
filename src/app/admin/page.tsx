@@ -27,6 +27,7 @@ type Karakter = {
   iletisim_tercihi: string
   telefon: string
   created_at: string
+  gorsel_url: string | null
 }
 
 const rolRenkleri: Record<string, string> = {
@@ -47,8 +48,16 @@ export default function Admin() {
   const [karakterler, setKarakterler] = useState<Karakter[]>([])
   const [aktifTab, setAktifTab] = useState<'kullanicilar' | 'karakterler'>('kullanicilar')
   const [seciliKarakter, setSeciliKarakter] = useState<Karakter | null>(null)
+  const [editedGorselUrl, setEditedGorselUrl] = useState<string | null>('')
+  const [isSavingGorsel, setIsSavingGorsel] = useState(false)
   const [yukleniyor, setYukleniyor] = useState(true)
   const router = useRouter()
+
+  useEffect(() => {
+    if (seciliKarakter) {
+      setEditedGorselUrl(seciliKarakter.gorsel_url)
+    }
+  }, [seciliKarakter])
 
   useEffect(() => {
     const supabase = createClient()
@@ -96,6 +105,27 @@ export default function Admin() {
     if (seciliKarakter?.id === id) setSeciliKarakter(prev => prev ? { ...prev, durum: yeniDurum } : null)
   }
 
+  async function gorselUrlGuncelle() {
+    if (!seciliKarakter) return
+    setIsSavingGorsel(true)
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('karakterler')
+      .update({ gorsel_url: editedGorselUrl })
+      .eq('id', seciliKarakter.id)
+      .select()
+      .single()
+
+    if (error) {
+      alert('Hata: ' + error.message)
+    } else if (data) {
+      const guncelKarakter = data as Karakter
+      setKarakterler(prev => prev.map(k => k.id === guncelKarakter.id ? guncelKarakter : k))
+      setSeciliKarakter(guncelKarakter)
+    }
+    setIsSavingGorsel(false)
+  }
+
   if (yukleniyor) return (
     <main className="min-h-screen bg-black flex items-center justify-center">
       <p className="text-white/20 text-xs tracking-widest uppercase">Yükleniyor...</p>
@@ -131,11 +161,16 @@ export default function Admin() {
         {/* KULLANICILAR */}
         {aktifTab === 'kullanicilar' && (
           <div className="flex flex-col gap-2">
-            {kullanicilar.map(k => (
-              <div key={k.id} className="border border-white/10 bg-white/5 px-6 py-4 flex items-center gap-6">
+            {kullanicilar.map(k => {
+              const karakter = karakterler.find(kar => kar.kullanici_id === k.id)
+              return (
+              <div key={k.id} className="border border-white/10 bg-white/5 px-6 py-4 flex items-center gap-4 md:gap-6">
                 <div className="flex-1 flex flex-col gap-1">
                   <span className="text-white/70 text-sm">{k.email}</span>
-                  <span className="text-white/20 text-xs">
+                  {karakter?.karakter_adi && (
+                    <span className="text-fuchsia-400/50 text-xs tracking-wider">{karakter.karakter_adi}</span>
+                  )}
+                  <span className="text-white/20 text-xs mt-1">
                     {new Date(k.created_at).toLocaleDateString('tr-TR')}
                   </span>
                 </div>
@@ -153,7 +188,8 @@ export default function Admin() {
                   <option value="kabileli">Kabileli</option>
                 </select>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -200,6 +236,29 @@ export default function Admin() {
                     <option value="hazirlaniyor">Hazırlanıyor</option>
                     <option value="tamamlandi">Tamamlandı</option>
                   </select>
+                </div>
+
+                {seciliKarakter.gorsel_url && (
+                  <div className="relative w-full aspect-[4/5] bg-black/20 border border-white/10 rounded-md overflow-hidden">
+                    <img src={seciliKarakter.gorsel_url} alt={seciliKarakter.karakter_adi} className="w-full h-full object-contain" />
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-white/30 text-xs tracking-widest uppercase">Görsel URL</label>
+                  <div className="flex gap-2">
+                    <input
+                      value={editedGorselUrl || ''}
+                      onChange={e => setEditedGorselUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="flex-1 bg-black/30 border border-white/20 p-2 text-white/60 text-xs"
+                    />
+                    <button
+                      onClick={gorselUrlGuncelle}
+                      disabled={isSavingGorsel || editedGorselUrl === seciliKarakter.gorsel_url}
+                      className="border border-emerald-500/50 text-emerald-400/80 px-3 py-1 text-xs tracking-widest uppercase hover:bg-emerald-500/10 disabled:opacity-50 transition-all"
+                    >{isSavingGorsel ? '...' : 'Kaydet'}</button>
+                  </div>
                 </div>
 
                 <div className="w-full h-px bg-white/10" />
