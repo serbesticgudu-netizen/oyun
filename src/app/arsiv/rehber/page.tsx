@@ -87,7 +87,7 @@ export default function Rehber() {
 
   return (
     <main
-      className="min-h-screen"
+      className="h-screen overflow-hidden"
       style={{
         backgroundImage: "url('/theia-bg.jpg')",
         backgroundSize: 'cover',
@@ -96,7 +96,7 @@ export default function Rehber() {
       }}
     >
       <div className="fixed inset-0 bg-black/80" />
-      <div className="relative z-10 max-w-4xl mx-auto px-8 py-16 flex flex-col gap-16">
+      <div className="relative z-10 max-w-5xl mx-auto px-8 h-full flex flex-col justify-center gap-8">
 
         {/* Başlık */}
         <div className="flex flex-col items-center gap-3 text-center">
@@ -125,7 +125,7 @@ export default function Rehber() {
           <p className="text-white/20 text-center tracking-widest uppercase text-sm">Rehber henüz yazılmamış.</p>
         )}
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {bolumler.slice(0, -1).map((bolum) => (
             <button key={bolum.id} onClick={() => setSeciliBolum(bolum)} className="relative group border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center text-center gap-2 aspect-square hover:border-white/30 hover:bg-black/60 transition-all">
               <h2 className="text-white/70 tracking-widest uppercase text-sm group-hover:text-white transition-all">{bolum.baslik}</h2>
@@ -137,7 +137,7 @@ export default function Rehber() {
         {bolumler.length > 0 && (() => {
           const sonBolum = bolumler[bolumler.length - 1];
           return (
-            <div className="mt-4 col-span-2 md:col-span-4">
+            <div className="mt-4">
               {/* Mobile */}
               <button onClick={() => setSeciliBolum(sonBolum)} className="relative md:hidden group border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center text-center gap-2 w-full hover:border-white/30 hover:bg-black/60 transition-all">
                 <h2 className="text-white/70 tracking-widest uppercase text-sm group-hover:text-white transition-all">{sonBolum.baslik}</h2>
