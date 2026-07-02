@@ -1,0 +1,310 @@
+'use client'
+
+import { useEffect, useState, useRef } from 'react'
+import { createClient } from '@/lib/supabase'
+import Link from 'next/link'
+
+type Nokta = {
+  id: string
+  isim: string
+  koordinat_lat: number
+  koordinat_lng: number
+  mitolojik_gecmis: string
+  fiziksel_gecmis: string
+  durum: 'uyku' | 'aktif' | 'kapali'
+  tip: 'gecit' | 'gorev' | 'etkinlik' | 'tehlike' | 'kesfet'
+  simge: string
+}
+
+const tipStil: Record<string, { renk: string; glow: string; etiket: string; bg: string; rgb: string }> = {
+  gecit:    { renk: '#a855f7', glow: '0 0 14px rgba(168,85,247,0.7)',   etiket: 'RUH GEÇİDİ',   bg: 'rgba(168,85,247,0.1)',  rgb: '168,85,247'  },
+  gorev:    { renk: '#22d3ee', glow: '0 0 14px rgba(34,211,238,0.7)',   etiket: 'GÖREV',         bg: 'rgba(34,211,238,0.1)',  rgb: '34,211,238'  },
+  etkinlik: { renk: '#f0c040', glow: '0 0 14px rgba(240,192,64,0.7)',   etiket: 'ETKİNLİK',     bg: 'rgba(240,192,64,0.1)',  rgb: '240,192,64'  },
+  tehlike:  { renk: '#ef4444', glow: '0 0 14px rgba(239,68,68,0.7)',    etiket: 'TEHLİKE',      bg: 'rgba(239,68,68,0.1)',   rgb: '239,68,68'   },
+  kesfet:   { renk: '#34d399', glow: '0 0 14px rgba(52,211,153,0.7)',   etiket: 'KEŞFEDİLECEK', bg: 'rgba(52,211,153,0.1)', rgb: '52,211,153'  },
+}
+
+const durumEtiket = { aktif: 'AKTİF', uyku: 'UYKU', kapali: 'KAPALI' }
+
+export default function Harita() {
+  const [noktalar, setNoktalar] = useState<Nokta[]>([])
+  const [secili, setSecili] = useState<Nokta | null>(null)
+  const [tab, setTab] = useState<'mitolojik' | 'fiziksel'>('mitolojik')
+  const [filtre, setFiltre] = useState<string | null>(null)
+  const mapRef = useRef<HTMLDivElement>(null)
+  const leafletRef = useRef<any>(null)
+  const markersRef = useRef<Record<string, any>>({})
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.from('gecit_noktalari').select('*').order('tip')
+      .then(({ data }) => setNoktalar(data ?? []))
+  }, [])
+
+  useEffect(() => {
+    if (noktalar.length === 0 || !mapRef.current || leafletRef.current) return
+
+    const link = document.createElement('link')
+    link.rel = 'stylesheet'
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+    document.head.appendChild(link)
+
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+    script.onload = () => {
+      const L = (window as any).L
+      const map = L.map(mapRef.current, {
+        center: [38.2, 27.2], zoom: 8,
+        zoomControl: true, attributionControl: false,
+      })
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map)
+      leafletRef.current = map
+
+      noktalar.forEach(nokta => {
+        const stil = tipStil[nokta.tip]
+        const boyut = nokta.durum === 'aktif' ? 22 : 16
+
+        const icon = L.divIcon({
+          html: `<div class="harita-nokta" data-tip="${nokta.tip}" data-durum="${nokta.durum}" style="
+            width:${boyut}px;height:${boyut}px;
+            background:${stil.renk}22;
+            border-radius:50%;
+            border:2px solid ${stil.renk};
+            display:flex;align-items:center;justify-content:center;
+            font-size:${boyut * 0.55}px;
+            cursor:pointer;
+            transition:all 0.3s;
+          ">${nokta.simge}</div>`,
+          className: '', iconSize: [boyut, boyut], iconAnchor: [boyut / 2, boyut / 2],
+        })
+
+        const marker = L.marker([nokta.koordinat_lat, nokta.koordinat_lng], { icon })
+          .addTo(map)
+          .on('click', () => { setSecili(nokta); setTab('mitolojik') })
+
+        markersRef.current[nokta.id] = { marker, nokta }
+      })
+    }
+    document.head.appendChild(script)
+
+    return () => {
+      if (leafletRef.current) { leafletRef.current.remove(); leafletRef.current = null }
+    }
+  }, [noktalar])
+
+  // Filtre değişince marker'ları güncelle
+  useEffect(() => {
+    if (!leafletRef.current) return
+    const L = (window as any).L
+    if (!L) return
+
+    Object.values(markersRef.current).forEach(({ marker, nokta }: any) => {
+      const stil = tipStil[nokta.tip]
+      const aktifFiltre = !filtre || nokta.tip === filtre
+      const boyut = nokta.durum === 'aktif' ? 22 : 16
+      const sinyal = aktifFiltre && nokta.tip === filtre
+
+      const icon = L.divIcon({
+        html: `
+          <div style="position:relative;width:${boyut + 20}px;height:${boyut + 20}px;display:flex;align-items:center;justify-content:center;">
+            ${sinyal ? `
+              <div style="
+                position:absolute;
+                width:${boyut + 20}px;height:${boyut + 20}px;
+                border-radius:50%;
+                border:2px solid ${stil.renk};
+                animation:sinyal_${nokta.tip} 1.5s ease-out infinite;
+                opacity:0;
+              "></div>
+              <div style="
+                position:absolute;
+                width:${boyut + 10}px;height:${boyut + 10}px;
+                border-radius:50%;
+                border:1px solid ${stil.renk};
+                animation:sinyal_${nokta.tip} 1.5s ease-out 0.5s infinite;
+                opacity:0;
+              "></div>
+            ` : ''}
+            <div style="
+              width:${boyut}px;height:${boyut}px;
+              background:${aktifFiltre ? stil.renk + '33' : '#ffffff08'};
+              border-radius:50%;
+              border:2px solid ${aktifFiltre ? stil.renk : '#ffffff15'};
+              display:flex;align-items:center;justify-content:center;
+              font-size:${boyut * 0.55}px;
+              cursor:pointer;
+              transition:all 0.4s;
+              box-shadow:${aktifFiltre ? stil.glow : 'none'};
+              filter:${aktifFiltre ? 'none' : 'grayscale(1) brightness(0.3)'};
+            ">${aktifFiltre ? nokta.simge : '·'}</div>
+          </div>
+        `,
+        className: '',
+        iconSize: [boyut + 20, boyut + 20],
+        iconAnchor: [(boyut + 20) / 2, (boyut + 20) / 2],
+      })
+      marker.setIcon(icon)
+    })
+  }, [filtre, noktalar])
+
+  const filtrelenmis = filtre ? noktalar.filter(n => n.tip === filtre) : noktalar
+
+  return (
+    <main className="min-h-screen bg-black flex flex-col"
+      style={{ backgroundImage: "url('/theia-bg.jpg')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="fixed inset-0 bg-black/90" />
+      <div className="fixed top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-fuchsia-500/40 to-transparent z-20" />
+
+      <div className="relative z-10 flex flex-col h-screen">
+
+        {/* Başlık */}
+        <div className="flex items-center justify-between px-8 py-4 border-b border-fuchsia-500/10 shrink-0">
+          <div className="flex flex-col gap-0.5">
+            <p className="text-fuchsia-400/40 text-xs tracking-[0.4em] uppercase">Theia Kabilesi</p>
+            <h1 className="text-white text-lg tracking-widest uppercase">Geçit Enerji Haritası</h1>
+          </div>
+          <Link href="/arsiv" className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all">
+            ← Arşiv
+          </Link>
+        </div>
+
+        {/* Filtre bar — tüm genişlik, eşit kolonlar */}
+        <div className="grid shrink-0 border-b border-white/5"
+          style={{ gridTemplateColumns: `repeat(${Object.keys(tipStil).length + 1}, 1fr)` }}>
+
+          <button onClick={() => setFiltre(null)}
+            className={`py-4 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 ${
+              !filtre ? 'bg-white/10 text-white' : 'text-white/30 hover:text-white/60 hover:bg-white/5'
+            }`}>
+            <span className="text-base">◎</span>
+            <span>Tümü</span>
+            <span className="text-white/20 text-xs">({noktalar.length})</span>
+          </button>
+
+          {Object.entries(tipStil).map(([tip, stil]) => (
+            <button key={tip} onClick={() => setFiltre(filtre === tip ? null : tip)}
+              className="py-4 text-xs tracking-widest uppercase transition-all border-r border-white/5 flex flex-col items-center gap-1.5 relative overflow-hidden"
+              style={{
+                color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.3)',
+                background: filtre === tip ? `rgba(${stil.rgb},0.12)` : 'transparent',
+              }}>
+              {filtre === tip && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5"
+                  style={{ background: stil.renk, boxShadow: `0 0 8px ${stil.renk}` }} />
+              )}
+              <span className="text-base">{tip === 'gecit' ? '◈' : tip === 'gorev' ? '⬡' : tip === 'etkinlik' ? '◉' : tip === 'tehlike' ? '⚠' : '✦'}</span>
+              <span style={{ color: filtre === tip ? stil.renk : 'rgba(255,255,255,0.4)' }}>{stil.etiket}</span>
+              <span style={{ color: filtre === tip ? `rgba(${stil.rgb},0.6)` : 'rgba(255,255,255,0.15)', fontSize: '10px' }}>
+                ({noktalar.filter(n => n.tip === tip).length})
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Ana içerik */}
+        <div className="flex flex-1 overflow-hidden">
+
+          {/* Harita */}
+          <div className="flex-1 relative">
+            <div ref={mapRef} className="w-full h-full" />
+
+            <style>{`
+              .leaflet-container { background: #000 !important; }
+              .leaflet-control-zoom { border: 1px solid rgba(255,255,255,0.1) !important; background: rgba(0,0,0,0.8) !important; }
+              .leaflet-control-zoom a { background: transparent !important; color: rgba(255,255,255,0.4) !important; border-color: rgba(255,255,255,0.1) !important; }
+              .leaflet-control-zoom a:hover { color: white !important; }
+
+              @keyframes sinyal_gecit    { 0% { transform:scale(0.5);opacity:0.8; } 100% { transform:scale(2);opacity:0; } }
+              @keyframes sinyal_gorev    { 0% { transform:scale(0.5);opacity:0.8; } 100% { transform:scale(2);opacity:0; } }
+              @keyframes sinyal_etkinlik { 0% { transform:scale(0.5);opacity:0.8; } 100% { transform:scale(2);opacity:0; } }
+              @keyframes sinyal_tehlike  { 0% { transform:scale(0.5);opacity:0.8; } 100% { transform:scale(2);opacity:0; } }
+              @keyframes sinyal_kesfet   { 0% { transform:scale(0.5);opacity:0.8; } 100% { transform:scale(2);opacity:0; } }
+
+              /* Özel mor scroll */
+              .nokta-liste::-webkit-scrollbar { width: 4px; }
+              .nokta-liste::-webkit-scrollbar-track { background: transparent; }
+              .nokta-liste::-webkit-scrollbar-thumb {
+                background: linear-gradient(to bottom, #a855f7, #7c3aed);
+                border-radius: 4px;
+                box-shadow: 0 0 8px rgba(168,85,247,0.8);
+              }
+            `}</style>
+
+            {/* Sol liste — kategorinin üstüne kadar uzansın */}
+            <div className="nokta-liste absolute top-0 left-0 bottom-0 flex flex-col gap-1 z-[999] p-3 overflow-y-auto"
+              style={{ maxWidth: '260px', paddingBottom: '12px' }}>
+              {filtrelenmis.map(nokta => {
+                const stil = tipStil[nokta.tip]
+                return (
+                  <button key={nokta.id}
+                    onClick={() => { setSecili(nokta); setTab('mitolojik') }}
+                    className="text-left px-3 py-2.5 text-xs tracking-wider border transition-all backdrop-blur-sm flex items-center gap-2.5 shrink-0"
+                    style={{
+                      borderColor: secili?.id === nokta.id ? stil.renk : 'rgba(255,255,255,0.08)',
+                      background: secili?.id === nokta.id ? `rgba(${stil.rgb},0.12)` : 'rgba(0,0,0,0.65)',
+                      color: secili?.id === nokta.id ? 'white' : 'rgba(255,255,255,0.4)',
+                      boxShadow: secili?.id === nokta.id ? `inset 0 0 12px rgba(${stil.rgb},0.1)` : 'none',
+                    }}>
+                    <span style={{ color: stil.renk, fontSize: '14px' }}>{nokta.simge}</span>
+                    <div className="flex flex-col gap-0.5">
+                      <span>{nokta.isim}</span>
+                      <span className="text-xs opacity-40 uppercase tracking-widest">{stil.etiket}</span>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Sağ panel */}
+          {secili && (
+            <div className="w-96 border-l border-white/10 bg-black/80 backdrop-blur-md flex flex-col overflow-y-auto shrink-0">
+              <div className="p-6 border-b border-white/10 flex flex-col gap-3"
+                style={{ background: tipStil[secili.tip].bg }}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs tracking-widest uppercase flex items-center gap-2"
+                      style={{ color: tipStil[secili.tip].renk }}>
+                      {secili.simge} {tipStil[secili.tip].etiket}
+                    </span>
+                    <h2 className="text-white text-base tracking-wider leading-snug">{secili.isim}</h2>
+                  </div>
+                  <button onClick={() => setSecili(null)}
+                    className="text-white/20 hover:text-white/60 transition-all text-xl shrink-0">×</button>
+                </div>
+                <span className={`text-xs tracking-widest uppercase px-2 py-1 border w-fit ${
+                  secili.durum === 'aktif' ? 'text-emerald-400 border-emerald-400/30' :
+                  secili.durum === 'kapali' ? 'text-white/20 border-white/10' :
+                  'text-amber-400 border-amber-400/30'
+                }`}>{durumEtiket[secili.durum]}</span>
+              </div>
+
+              <div className="flex border-b border-white/10">
+                {(['mitolojik', 'fiziksel'] as const).map(t => (
+                  <button key={t} onClick={() => setTab(t)}
+                    className={`flex-1 py-3 text-xs tracking-widest uppercase transition-all border-b ${
+                      tab === t ? 'text-white border-white/40' : 'text-white/20 border-transparent hover:text-white/40'
+                    }`}>
+                    {t === 'mitolojik' ? '✦ Mitolojik' : '◈ Fiziksel'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-6 flex-1">
+                <p className="text-white/60 text-sm leading-relaxed tracking-wide">
+                  {tab === 'mitolojik' ? secili.mitolojik_gecmis : secili.fiziksel_gecmis}
+                </p>
+              </div>
+
+              <div className="p-4 border-t border-white/5">
+                <p className="text-white/15 text-xs tracking-wider text-center font-mono">
+                  {secili.koordinat_lat.toFixed(4)}° K &nbsp;·&nbsp; {secili.koordinat_lng.toFixed(4)}° D
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </main>
+  )
+}
