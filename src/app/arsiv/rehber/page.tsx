@@ -17,17 +17,32 @@ type Profil = {
 }
 
 const renkStilleri = [
-  { border: 'border-violet-400/30', hoverBorder: 'hover:border-violet-400', bg: 'hover:bg-violet-900/40', modalBorder: 'border-violet-500/30', modalShadow: 'shadow-violet-500/10' },
-  { border: 'border-cyan-400/30', hoverBorder: 'hover:border-cyan-400', bg: 'hover:bg-cyan-900/40', modalBorder: 'border-cyan-500/30', modalShadow: 'shadow-cyan-500/10' },
-  { border: 'border-amber-400/30', hoverBorder: 'hover:border-amber-400', bg: 'hover:bg-amber-900/40', modalBorder: 'border-amber-500/30', modalShadow: 'shadow-amber-500/10' },
-  { border: 'border-rose-400/30', hoverBorder: 'hover:border-rose-400', bg: 'hover:bg-rose-900/40', modalBorder: 'border-rose-500/30', modalShadow: 'shadow-rose-500/10' },
-  { border: 'border-emerald-400/30', hoverBorder: 'hover:border-emerald-400', bg: 'hover:bg-emerald-900/40', modalBorder: 'border-emerald-500/30', modalShadow: 'shadow-emerald-500/10' },
-  { border: 'border-indigo-400/30', hoverBorder: 'hover:border-indigo-400', bg: 'hover:bg-indigo-900/40', modalBorder: 'border-indigo-500/30', modalShadow: 'shadow-indigo-500/10' },
-  { border: 'border-lime-400/30', hoverBorder: 'hover:border-lime-400', bg: 'hover:bg-lime-900/40', modalBorder: 'border-lime-500/30', modalShadow: 'shadow-lime-500/10' },
-  { border: 'border-pink-400/30', hoverBorder: 'hover:border-pink-400', bg: 'hover:bg-pink-900/40', modalBorder: 'border-pink-500/30', modalShadow: 'shadow-pink-500/10' },
-  { border: 'border-sky-400/30', hoverBorder: 'hover:border-sky-400', bg: 'hover:bg-sky-900/40', modalBorder: 'border-sky-500/30', modalShadow: 'shadow-sky-500/10' },
-  { border: 'border-teal-400/30', hoverBorder: 'hover:border-teal-400', bg: 'hover:bg-teal-900/40', modalBorder: 'border-teal-500/30', modalShadow: 'shadow-teal-500/10' },
-];
+  { border: 'border-violet-400/30', modalBorder: 'border-violet-500/30', modalShadow: 'shadow-violet-500/10' },
+  { border: 'border-cyan-400/30', modalBorder: 'border-cyan-500/30', modalShadow: 'shadow-cyan-500/10' },
+  { border: 'border-amber-400/30', modalBorder: 'border-amber-500/30', modalShadow: 'shadow-amber-500/10' },
+  { border: 'border-rose-400/30', modalBorder: 'border-rose-500/30', modalShadow: 'shadow-rose-500/10' },
+  { border: 'border-emerald-400/30', modalBorder: 'border-emerald-500/30', modalShadow: 'shadow-emerald-500/10' },
+  { border: 'border-indigo-400/30', modalBorder: 'border-indigo-500/30', modalShadow: 'shadow-indigo-500/10' },
+  { border: 'border-lime-400/30', modalBorder: 'border-lime-500/30', modalShadow: 'shadow-lime-500/10' },
+  { border: 'border-pink-400/30', modalBorder: 'border-pink-500/30', modalShadow: 'shadow-pink-500/10' },
+  { border: 'border-sky-400/30', modalBorder: 'border-sky-500/30', modalShadow: 'shadow-sky-500/10' },
+  { border: 'border-teal-400/30', modalBorder: 'border-teal-500/30', modalShadow: 'shadow-teal-500/10' },
+  { border: 'border-fuchsia-400/30', modalBorder: 'border-fuchsia-500/30', modalShadow: 'shadow-fuchsia-500/10' },
+]
+
+const borderRenkler = [
+  '#a855f7',
+  '#22d3ee',
+  '#f59e0b',
+  '#f43f5e',
+  '#10b981',
+  '#6366f1',
+  '#84cc16',
+  '#ec4899',
+  '#0ea5e9',
+  '#14b8a6',
+  '#e879f9',
+]
 
 export default function Rehber() {
   const [bolumler, setBolumler] = useState<RehberBolumu[]>([])
@@ -45,7 +60,6 @@ export default function Rehber() {
         const { data: p } = await supabase.from('profiles').select('is_admin').eq('id', user.id).single()
         setProfil(p)
       }
-
       const { data, error } = await supabase.from('rehber').select('*').order('sira')
       if (error) console.error(JSON.stringify(error))
       else setBolumler(data ?? [])
@@ -54,7 +68,8 @@ export default function Rehber() {
     yukle()
   }, [])
 
-  function handleEdit(bolum: RehberBolumu) {
+  function handleEdit(e: React.MouseEvent, bolum: RehberBolumu) {
+    e.stopPropagation()
     setEditingBolum({ ...bolum })
     setSeciliBolum(null)
   }
@@ -63,18 +78,15 @@ export default function Rehber() {
     if (!editingBolum) return
     setIsSaving(true)
     const supabase = createClient()
-
     const bolumData = {
       baslik: editingBolum.baslik,
       icerik: editingBolum.icerik,
       sira: editingBolum.sira,
       gorsel_url: editingBolum.gorsel_url,
     }
-
     const { data, error } = editingBolum.id
       ? await supabase.from('rehber').update(bolumData).eq('id', editingBolum.id).select().single()
       : await supabase.from('rehber').insert(bolumData).select().single()
-
     if (error) {
       alert('Hata: ' + error.message)
     } else if (data) {
@@ -100,6 +112,9 @@ export default function Rehber() {
     }
   }
 
+  const gridBolumleri = bolumler.length > 10 ? bolumler.slice(0, 10) : bolumler
+  const sonBolum = bolumler.length > 10 ? bolumler[10] : null
+
   return (
     <main
       className="h-screen flex flex-col overflow-hidden"
@@ -123,7 +138,11 @@ export default function Rehber() {
           <div className="w-24 h-px bg-white/20 mt-2" />
           {profil?.is_admin && !editingBolum && (
             <button
-              onClick={() => setEditingBolum({ baslik: '', icerik: '', sira: (bolumler.length > 0 ? Math.max(...bolumler.map(b => b.sira)) : 0) + 1 })}
+              onClick={() => setEditingBolum({
+                baslik: '',
+                icerik: '',
+                sira: bolumler.length > 0 ? Math.max(...bolumler.map(b => b.sira)) + 1 : 1
+              })}
               className="mt-4 border border-emerald-500/50 text-emerald-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-emerald-500/10 transition-all"
             >
               + Yeni Bölüm Ekle
@@ -131,99 +150,139 @@ export default function Rehber() {
           )}
         </div>
 
-        {/* Bölümler */}
         {yukleniyor && (
           <p className="text-white/20 text-center tracking-widest uppercase text-sm">Rehber okunuyor...</p>
         )}
-
         {!yukleniyor && bolumler.length === 0 && (
           <p className="text-white/20 text-center tracking-widest uppercase text-sm">Rehber henüz yazılmamış.</p>
         )}
 
         <div className="flex-1 min-h-0 flex flex-col gap-2 md:gap-4">
+
+          {/* Grid — ilk 10 bölüm */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4 flex-grow">
-{bolumler.slice(0, bolumler.length > 10 ? 10 : bolumler.length).map((bolum, index) => {
-              const stil = renkStilleri[index % renkStilleri.length];
+            {gridBolumleri.map((bolum, index) => {
+              const stil = renkStilleri[index % renkStilleri.length]
+              const renk = borderRenkler[index % borderRenkler.length]
               return (
-                <button key={bolum.id} onClick={() => setSeciliBolum(bolum)} className={`relative group ${stil.border} ${stil.hoverBorder} ${stil.bg} p-4 flex flex-col items-center justify-center text-center gap-2 transition-all overflow-hidden rounded-md`}>
-                  {bolum.gorsel_url && <img src={bolum.gorsel_url} alt={bolum.baslik} className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" />}
-                  <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-all" />
-                  <h2 className="relative z-10 text-white/80 tracking-widest uppercase text-xs md:text-sm group-hover:text-white transition-all">{bolum.baslik}</h2>
-                  {profil?.is_admin && <button onClick={(e) => { e.stopPropagation(); handleEdit(bolum); }} className="absolute top-2 right-2 z-20 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">Düzenle</button>}
-                </button>
+                <div
+                  key={bolum.id}
+                  onClick={() => setSeciliBolum(bolum)}
+                  className={`relative group border ${stil.border} p-4 flex flex-col items-center justify-center text-center gap-2 transition-all overflow-hidden rounded-md cursor-pointer`}
+                  style={{ boxShadow: `inset 0 0 30px ${renk}15` }}
+                >
+                  {bolum.gorsel_url && (
+                    <img
+                      src={bolum.gorsel_url}
+                      alt={bolum.baslik}
+                      className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                    />
+                  )}
+                  <div
+                    className="absolute inset-0 transition-all duration-300"
+                    style={{
+                      background: bolum.gorsel_url
+                        ? `linear-gradient(135deg, ${renk}90 0%, #00000099 100%)`
+                        : `linear-gradient(135deg, ${renk}90 0%, rgba(0,0,0,0.85) 100%)`,
+                    }}
+                  />
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `radial-gradient(ellipse at center, ${renk}25 0%, transparent 70%)` }}
+                  />
+                  <h2
+                    className="relative z-10 text-black font-bold tracking-widest uppercase text-lg md:text-xl lg:text-2xl transition-all"
+                    style={{ textShadow: `0 0 10px ${renk}` }}
+                  >
+                    {bolum.baslik}
+                  </h2>
+                  {profil?.is_admin && (
+                    <span
+                      onClick={(e) => handleEdit(e, bolum)}
+                      className="absolute top-2 right-2 z-20 text-white/30 hover:text-white text-xs cursor-pointer"
+                    >
+                      ✎
+                    </span>
+                  )}
+                </div>
               )
             })}
           </div>
 
-          {bolumler.length > 10 && (() => {
-            const sonBolum = bolumler[10];
-            const stil = renkStilleri[10 % renkStilleri.length];
-            return (
-              <div className="shrink-0 mt-2 md:mt-4">
-                {/* Mobile */}
-                <button onClick={() => setSeciliBolum(sonBolum)} className="relative md:hidden group border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center text-center gap-2 w-full hover:border-white/30 hover:bg-black/60 transition-all">
-                  <h2 className="text-white/70 tracking-widest uppercase text-sm group-hover:text-white transition-all">{sonBolum.baslik}</h2>
-                  {profil?.is_admin && (
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(sonBolum); }} className="absolute top-2 right-2 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">
-                      Düzenle
-                    </button>
-                  )}
-                </button>
-                <button onClick={() => setSeciliBolum(sonBolum)} className={`relative md:hidden group border ${stil.border} ${stil.hoverBorder} ${stil.bg} p-6 flex flex-col items-center justify-center text-center gap-2 w-full transition-all overflow-hidden rounded-md`}>
-                  {sonBolum.gorsel_url && <img src={sonBolum.gorsel_url} alt={sonBolum.baslik} className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" />}
-                  <div className="absolute inset-0 bg-black/60 group-hover:bg-black/70 transition-all" />
-                  <h2 className="relative z-10 text-white/80 tracking-widest uppercase text-sm group-hover:text-white transition-all">{sonBolum.baslik}</h2>
-                  {profil?.is_admin && (
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(sonBolum); }} className="absolute top-2 right-2 z-20 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">
-                      Düzenle
-                    </button>
-                  )}
-                </button>
-                {/* Desktop */}
-                <div className="hidden md:flex flex-col gap-4 relative border border-white/10 bg-black/40 p-6">
-                  <h2 className="text-white tracking-widest uppercase text-lg">{sonBolum.baslik}</h2>
-                  <div className="w-full h-px bg-white/10" />
-                  <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{sonBolum.icerik}</p>
-                  {profil?.is_admin && (
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(sonBolum); }} className="absolute top-4 right-4 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">
-                      Düzenle
-                    </button>
-                  )}
-                </div>
-                <div className={`hidden md:flex flex-col gap-4 relative border ${stil.border} p-6 overflow-hidden rounded-md`}>
-                  {sonBolum.gorsel_url && <img src={sonBolum.gorsel_url} alt={sonBolum.baslik} className="absolute inset-0 w-full h-full object-cover object-center" />}
-                  <div className="absolute inset-0 bg-black/70" />
-                  <div className="relative z-10">
-                    <h2 className="text-white tracking-widest uppercase text-lg">{sonBolum.baslik}</h2>
-                    <div className="w-full h-px bg-white/10 my-4" />
-                    <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{sonBolum.icerik}</p>
-                  </div>
-                  {profil?.is_admin && (
-                    <button onClick={(e) => { e.stopPropagation(); handleEdit(sonBolum); }} className="absolute top-4 right-4 z-20 text-cyan-400/50 hover:text-cyan-400 text-xs uppercase tracking-widest">
-                      Düzenle
-                    </button>
-                  )}
-                </div>
+          {/* 11. bölüm — tam genişlik */}
+          {sonBolum && (
+            <div className="shrink-0">
+              {/* Mobil */}
+              <div
+                onClick={() => setSeciliBolum(sonBolum)}
+                className={`relative md:hidden group border ${renkStilleri[10].border} p-6 flex flex-col items-center justify-center text-center gap-2 w-full transition-all overflow-hidden rounded-md cursor-pointer`}
+                style={{ boxShadow: `inset 0 0 30px ${borderRenkler[10]}15` }}
+              >
+                {sonBolum.gorsel_url && (
+                  <img src={sonBolum.gorsel_url} alt={sonBolum.baslik}
+                    className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" />
+                )}
+                <div className="absolute inset-0 transition-all duration-300"
+                  style={{ background: `linear-gradient(135deg, ${borderRenkler[10]}90 0%, rgba(0,0,0,0.85) 100%)` }} />
+                <h2
+                  className="relative z-10 text-black font-bold tracking-widest uppercase text-xl transition-all"
+                  style={{ textShadow: `0 0 10px ${borderRenkler[10]}` }}
+                >
+                  {sonBolum.baslik}
+                </h2>
+                {profil?.is_admin && (
+                  <span onClick={(e) => handleEdit(e, sonBolum)}
+                    className="absolute top-2 right-2 z-20 text-white/30 hover:text-white text-xs cursor-pointer">✎</span>
+                )}
               </div>
-            )
-          })()}
+
+              {/* Desktop */}
+              <div
+                className={`hidden md:flex flex-col gap-4 relative border ${renkStilleri[10].border} p-6 overflow-hidden rounded-md cursor-pointer group`}
+                onClick={() => setSeciliBolum(sonBolum)}
+                style={{ boxShadow: `inset 0 0 40px ${borderRenkler[10]}15` }}
+              >
+                {sonBolum.gorsel_url && (
+                  <img src={sonBolum.gorsel_url} alt={sonBolum.baslik}
+                    className="absolute inset-0 w-full h-full object-cover object-center opacity-40 group-hover:opacity-60 transition-opacity duration-500" />
+                )}
+                <div className="absolute inset-0 transition-all duration-300"
+                  style={{ background: `linear-gradient(135deg, ${borderRenkler[10]}40 0%, rgba(0,0,0,0.85) 100%)` }} />
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: `radial-gradient(ellipse at left, ${borderRenkler[10]}20 0%, transparent 60%)` }} />
+                <div className="relative z-10">
+                  <h2 className="text-white tracking-widest uppercase text-2xl">{sonBolum.baslik}</h2>
+                  <div className="w-full h-px my-4"
+                    style={{ background: `linear-gradient(90deg, ${borderRenkler[10]}60, transparent)` }} />
+                  <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{sonBolum.icerik}</p>
+                </div>
+                {profil?.is_admin && (
+                  <span onClick={(e) => handleEdit(e, sonBolum)}
+                    className="absolute top-4 right-4 z-20 text-white/30 hover:text-white text-xs cursor-pointer">✎</span>
+                )}
+              </div>
+            </div>
+          )}
 
           <Link href="/arsiv" className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all text-center shrink-0">
             ← Arşive Dön
           </Link>
         </div>
 
-        {/* Modal */}
+        {/* Okuma Modalı */}
         {seciliBolum && (() => {
-          const seciliIndex = bolumler.findIndex(b => b.id === seciliBolum.id);
-          const stil = renkStilleri[seciliIndex % renkStilleri.length];
+          const seciliIndex = bolumler.findIndex(b => b.id === seciliBolum.id)
+          const stil = renkStilleri[seciliIndex % renkStilleri.length]
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSeciliBolum(null)}>
               <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
-              <div className={`relative z-10 w-full max-w-2xl max-h-[90vh] bg-black border ${stil.modalBorder} rounded-lg shadow-2xl ${stil.modalShadow} flex flex-col`} onClick={e => e.stopPropagation()}>
+              <div
+                className={`relative z-10 w-full max-w-2xl max-h-[90vh] bg-black border ${stil.modalBorder} rounded-lg shadow-2xl ${stil.modalShadow} flex flex-col`}
+                onClick={e => e.stopPropagation()}
+              >
                 <div className={`flex items-center justify-between p-6 border-b ${stil.modalBorder}`}>
                   <h2 className="text-white text-xl tracking-widest uppercase">{seciliBolum.baslik}</h2>
-                  <button onClick={() => setSeciliBolum(null)} className="text-white/40 hover:text-white transition-colors text-2xl">×</button>
+                  <span onClick={() => setSeciliBolum(null)} className="text-white/40 hover:text-white text-2xl cursor-pointer">×</span>
                 </div>
                 <div className="p-8 flex-1 overflow-y-auto">
                   <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">{seciliBolum.icerik}</p>
@@ -233,34 +292,76 @@ export default function Rehber() {
           )
         })()}
 
-        {/* Admin Edit Modal */}
+        {/* Admin Düzenleme Modalı */}
         {editingBolum && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setEditingBolum(null)}>
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
-            <div className="relative z-10 w-full max-w-2xl bg-black border border-fuchsia-500/30 rounded-lg shadow-2xl shadow-fuchsia-500/10 flex flex-col" onClick={e => e.stopPropagation()}>
+            <div
+              className="relative z-10 w-full max-w-2xl bg-black border border-fuchsia-500/30 rounded-lg shadow-2xl shadow-fuchsia-500/10 flex flex-col"
+              onClick={e => e.stopPropagation()}
+            >
               <div className="p-6 border-b border-white/10">
-                <h2 className="text-white tracking-widest uppercase">{editingBolum.id ? 'Bölümü Düzenle' : 'Yeni Bölüm Ekle'}</h2>
+                <h2 className="text-white tracking-widest uppercase">
+                  {editingBolum.id ? 'Bölümü Düzenle' : 'Yeni Bölüm Ekle'}
+                </h2>
               </div>
               <div className="p-6 flex flex-col gap-4 overflow-y-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <input value={editingBolum.baslik || ''} onChange={e => setEditingBolum({ ...editingBolum, baslik: e.target.value })} placeholder="Başlık" className="bg-black/30 border border-white/20 p-2 text-white" />
-                  <input type="number" value={editingBolum.sira || 0} onChange={e => setEditingBolum({ ...editingBolum, sira: parseInt(e.target.value) || 0 })} placeholder="Sıra" className="bg-black/30 border border-white/20 p-2 text-white" />
-                  <input value={editingBolum.gorsel_url || ''} onChange={e => setEditingBolum({ ...editingBolum, gorsel_url: e.target.value })} placeholder="Görsel URL" className="md:col-span-2 bg-black/30 border border-white/20 p-2 text-white" />
+                  <input
+                    value={editingBolum.baslik || ''}
+                    onChange={e => setEditingBolum({ ...editingBolum, baslik: e.target.value })}
+                    placeholder="Başlık"
+                    className="bg-black/30 border border-white/20 p-2 text-white"
+                  />
+                  <input
+                    type="number"
+                    value={editingBolum.sira || 0}
+                    onChange={e => setEditingBolum({ ...editingBolum, sira: parseInt(e.target.value) || 0 })}
+                    placeholder="Sıra"
+                    className="bg-black/30 border border-white/20 p-2 text-white"
+                  />
+                  <input
+                    value={editingBolum.gorsel_url || ''}
+                    onChange={e => setEditingBolum({ ...editingBolum, gorsel_url: e.target.value })}
+                    placeholder="Görsel URL (Supabase Storage linki)"
+                    className="md:col-span-2 bg-black/30 border border-white/20 p-2 text-white"
+                  />
                 </div>
-                <textarea value={editingBolum.icerik || ''} onChange={e => setEditingBolum({ ...editingBolum, icerik: e.target.value })} placeholder="İçerik" rows={12} className="bg-black/30 border border-white/20 p-2 text-white w-full resize-y" />
+                <textarea
+                  value={editingBolum.icerik || ''}
+                  onChange={e => setEditingBolum({ ...editingBolum, icerik: e.target.value })}
+                  placeholder="İçerik"
+                  rows={12}
+                  className="bg-black/30 border border-white/20 p-2 text-white w-full resize-y"
+                />
               </div>
               <div className="p-6 border-t border-white/10 flex gap-2 justify-end">
                 {editingBolum.id && (
-                  <button onClick={() => handleDelete(editingBolum.id!)} disabled={isSaving} className="border border-rose-500/50 text-rose-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-rose-500/10 disabled:opacity-50">Sil</button>
+                  <span
+                    onClick={() => handleDelete(editingBolum.id!)}
+                    className="border border-rose-500/50 text-rose-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-rose-500/10 cursor-pointer"
+                  >
+                    Sil
+                  </span>
                 )}
-                <button onClick={() => setEditingBolum(null)} disabled={isSaving} className="border border-white/20 text-white/60 px-4 py-2 text-xs tracking-widest uppercase hover:bg-white/10">İptal</button>
-                <button onClick={handleSave} disabled={isSaving} className="border border-emerald-500/50 text-emerald-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-emerald-500/10 disabled:opacity-50">{isSaving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+                <span
+                  onClick={() => setEditingBolum(null)}
+                  className="border border-white/20 text-white/60 px-4 py-2 text-xs tracking-widest uppercase hover:bg-white/10 cursor-pointer"
+                >
+                  İptal
+                </span>
+                <span
+                  onClick={handleSave}
+                  className={`border border-emerald-500/50 text-emerald-400/80 px-4 py-2 text-xs tracking-widest uppercase hover:bg-emerald-500/10 cursor-pointer ${isSaving ? 'opacity-50 pointer-events-none' : ''}`}
+                >
+                  {isSaving ? 'Kaydediliyor...' : 'Kaydet'}
+                </span>
               </div>
             </div>
           </div>
         )}
-        </div>
-      </main>
-    )
-}
 
+      </div>
+    </main>
+  )
+}
