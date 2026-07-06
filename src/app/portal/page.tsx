@@ -162,21 +162,53 @@ setOkunmamis(count ?? 0)
             <span className="hidden sm:inline">Kadim </span>Arşiv
           </Link>
 <Link href="/chat"
-  className="relative flex items-center gap-2 text-rose-400/40 text-xs tracking-widest uppercase hover:text-rose-400 transition-all border border-rose-400/15 hover:border-rose-400/40 px-3 py-1.5">
-  <span>◈</span>
+  className="relative flex items-center gap-2 text-rose-400/40 text-xs tracking-widest uppercase hover:text-rose-400 transition-all border border-rose-400/15 hover:border-rose-400/40 px-3 py-1.5"
+  title="Sesler"
+>
+  {/* Mektup İkonu */}
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="14" 
+    height="14" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="1.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M21.2 8.4c.5.3.8.8.8 1.3v10c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V9.7c0-.5.3-1 .8-1.3L12 3l9.2 5.4Z"/>
+    <path d="m22 10-10 7L2 10"/>
+  </svg>
+
+  {/* Metin: Mobilde gizli (hidden), Küçük ekrandan itibaren görünür (sm:inline) */}
   <span className="hidden sm:inline">Sesler</span>
+
+  {/* Bildirim Baloncuğu: Tüm mantığı ve stili korundu */}
   {okunmamis > 0 && (
     <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
-      style={{ background: '#e879f9', color: '#000', fontSize: '9px', boxShadow: '0 0 8px rgba(232,121,249,0.8)' }}>
+      style={{ 
+        background: '#e879f9', 
+        color: '#000', 
+        fontSize: '9px', 
+        boxShadow: '0 0 8px rgba(232,121,249,0.8)' 
+      }}>
       {okunmamis > 9 ? '9+' : okunmamis}
     </span>
   )}
 </Link>
-          <Link href="/magaza"
-            className="flex items-center gap-2 text-amber-400/40 text-xs tracking-widest uppercase hover:text-amber-400 transition-all border border-amber-400/15 hover:border-amber-400/40 px-3 py-1.5">
-            <span>◈</span>
-            <span className="hidden sm:inline">Mağaza</span>
-          </Link>
+<Link href="/magaza"
+  className="flex items-center gap-2 text-amber-400/40 text-xs tracking-widest uppercase hover:text-amber-400 transition-all border border-amber-400/15 hover:border-amber-400/40 px-3 py-1.5"
+  title="Mağaza"
+>
+  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="8"/>
+    <line x1="12" y1="8" x2="12" y2="16"/>
+    <path d="M16 12H8"/>
+    <circle cx="12" cy="12" r="10" strokeOpacity="0.3" strokeDasharray="2 2"/>
+  </svg>
+  <span className="hidden sm:inline">Mağaza</span>
+</Link>
           {profil?.is_admin && (
             <Link href="/admin" className="text-violet-400/40 text-xs tracking-widest uppercase hover:text-violet-400 transition-all">Yönetim</Link>
           )}
