@@ -78,6 +78,7 @@ export default function Chat() {
   const aktifKanalRef = useRef<Kanal | null>(null)
   const kullaniciRef = useRef<Kullanici | null>(null)
   const supabase = createClient()
+  const [sidebarAcik, setSidebarAcik] = useState(false)
 
   // ref'leri güncel tut
   useEffect(() => { aktifKanalRef.current = aktifKanal }, [aktifKanal])
@@ -280,13 +281,20 @@ export default function Chat() {
     setGonderiyor(false)
   }
 
-  function kanalSec(kanal: Kanal) {
-    setAktifKanal(kanal)
-    setMod('kanal')
-    setPrivateHedef(null)
-    // Bildirimi temizle
-    setKanalBildirim(prev => ({ ...prev, [kanal.id]: 0 }))
-  }
+function kanalSec(kanal: Kanal) {
+  setAktifKanal(kanal)
+  setMod('kanal')
+  setPrivateHedef(null)
+  setKanalBildirim(prev => ({ ...prev, [kanal.id]: 0 }))
+  setSidebarAcik(false) // Mobilde sidebar'ı kapat
+}
+
+function privateSec(k: Kullanici) {
+  setPrivateHedef(k);
+  setMod('private');
+  setAktifKanal(null);
+  setSidebarAcik(false); // Mobilde sidebar'ı kapatır
+}
 
   function kanalErisimi(kanal: Kanal): boolean {
     if (!kullanici) return false
@@ -304,8 +312,9 @@ export default function Chat() {
 
   const aktifMesajlar = mod === 'kanal' ? mesajlar : privateMesajlar
 
-  return (
-    <main className="h-screen bg-black flex flex-col overflow-hidden">
+return (
+    <main className="h-screen bg-black flex flex-col overflow-hidden relative">
+      {/* Arka plan katmanları */}
       <div className="fixed inset-0 opacity-10"
         style={{ backgroundImage: "url('/theia-bg.jpg')", backgroundSize: 'cover' }} />
       <div className="fixed inset-0 bg-black/88" />
@@ -313,16 +322,32 @@ export default function Chat() {
         style={{ background: 'linear-gradient(90deg, transparent, rgba(168,85,247,0.5), transparent)' }} />
 
       <div className="relative z-10 flex h-full overflow-hidden">
+        
+        {/* MOBİL ARKA PLAN KARARTMA (Sidebar açıkken arkaya tıklanırsa kapatır) */}
+        {sidebarAcik && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden" 
+            onClick={() => setSidebarAcik(false)} 
+          />
+        )}
 
-        {/* SOL SIDEBAR */}
-        <div className="w-64 shrink-0 flex flex-col border-r border-white/5 bg-black/40">
-          <div className="px-5 py-4 border-b border-white/5">
-            <p className="text-fuchsia-400/40 text-xs tracking-[0.4em] uppercase mb-1">İletişim</p>
-            <h1 className="text-white text-sm tracking-widest uppercase">Kabile Sesleri</h1>
+        {/* SOL SIDEBAR - Mobilde kayarak açılır, masaüstünde sabittir */}
+        <div className={`
+          fixed inset-y-0 left-0 z-50 w-72 bg-black border-r border-white/5 transition-transform duration-300 transform
+          ${sidebarAcik ? 'translate-x-0' : '-translate-x-full'}
+          md:relative md:translate-x-0 md:flex md:w-64 md:shrink-0 flex flex-col bg-black/40
+        `}>
+          <div className="px-5 py-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex flex-col gap-0.5">
+              <p className="text-fuchsia-400/40 text-xs tracking-[0.4em] uppercase mb-1">İletişim</p>
+              <h1 className="text-white text-sm tracking-widest uppercase">Kabile Sesleri</h1>
+            </div>
+            {/* Mobilde sidebarı kapatma butonu */}
+            <button onClick={() => setSidebarAcik(false)} className="md:hidden text-white/20 text-2xl">×</button>
           </div>
 
-          {/* Kanallar */}
-          <div className="flex flex-col gap-1 p-3 border-b border-white/5">
+          {/* Kanallar Listesi */}
+          <div className="flex flex-col gap-1 p-3 border-b border-white/5 overflow-y-auto">
             <p className="text-white/20 text-xs tracking-widest uppercase px-2 py-1">Kanallar</p>
             {kanallar.map(kanal => {
               const erisim = kanalErisimi(kanal)
@@ -336,7 +361,6 @@ export default function Chat() {
                     background: aktifKanal?.id === kanal.id ? 'rgba(168,85,247,0.15)' : 'transparent',
                     borderLeft: aktifKanal?.id === kanal.id ? '2px solid rgba(168,85,247,0.6)' : '2px solid transparent',
                     opacity: erisim ? 1 : 0.3,
-                    cursor: erisim ? 'pointer' : 'not-allowed',
                   }}
                 >
                   <span className="text-base">{kanal.simge}</span>
@@ -354,7 +378,7 @@ export default function Chat() {
             })}
           </div>
 
-          {/* Private */}
+          {/* Özel Mesajlar Listesi */}
           <div className="flex flex-col gap-1 p-3 flex-1 overflow-y-auto">
             <div className="flex items-center justify-between px-2 py-1">
               <p className="text-white/20 text-xs tracking-widest uppercase">Özel Mesajlar</p>
@@ -368,7 +392,7 @@ export default function Chat() {
             {kullanicilar.map(k => (
               <button
                 key={k.id}
-                onClick={() => { setPrivateHedef(k); setMod('private'); setAktifKanal(null) }}
+                onClick={() => { setPrivateHedef(k); setMod('private'); setAktifKanal(null); setSidebarAcik(false); }}
                 className="flex items-center gap-3 px-3 py-2 text-left transition-all rounded"
                 style={{
                   background: privateHedef?.id === k.id ? 'rgba(34,211,238,0.1)' : 'transparent',
@@ -396,146 +420,151 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* SAĞ ALAN */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {(aktifKanal || privateHedef) ? (
-            <>
-              {/* Başlık */}
-              <div className="px-6 py-4 border-b border-white/5 shrink-0 flex items-center gap-3">
+        {/* SAĞ ALAN (SOHBET PENCERESİ) */}
+        <div className="flex-1 flex flex-col overflow-hidden w-full bg-black/20">
+          
+          {/* SOHBET BAŞLIĞI */}
+          <div className="px-4 md:px-6 py-4 border-b border-white/5 shrink-0 flex items-center gap-3 bg-black/40">
+            {/* Mobilde sidebarı açan Hamburger Menü */}
+            <button 
+              onClick={() => setSidebarAcik(true)}
+              className="md:hidden p-2 -ml-2 text-fuchsia-400/60 hover:text-fuchsia-400"
+            >
+              <span className="text-2xl">☰</span>
+            </button>
+
+            {(aktifKanal || privateHedef) ? (
+              <>
                 {aktifKanal ? (
                   <>
-                    <span className="text-xl">{aktifKanal.simge}</span>
-                    <div>
-                      <h2 className="text-white text-sm tracking-widest uppercase">{aktifKanal.isim}</h2>
-                      <p className="text-white/20 text-xs">{aktifKanal.aciklama}</p>
+                    <span className="text-xl shrink-0">{aktifKanal.simge}</span>
+                    <div className="min-w-0">
+                      <h2 className="text-white text-sm tracking-widest uppercase truncate">{aktifKanal.isim}</h2>
+                      <p className="text-white/20 text-[10px] md:text-xs truncate">{aktifKanal.aciklama}</p>
                     </div>
                   </>
-                ) : privateHedef ? (
+                ) : (
                   <>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm"
-                      style={{ background: `${rolRenk[privateHedef.rol]}20`, border: `1px solid ${rolRenk[privateHedef.rol]}40`, color: rolRenk[privateHedef.rol] }}>
-                      {(privateHedef.karakter_adi ?? privateHedef.email)[0].toUpperCase()}
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0"
+                      style={{ background: `${rolRenk[privateHedef!.rol]}20`, border: `1px solid ${rolRenk[privateHedef!.rol]}40`, color: rolRenk[privateHedef!.rol] }}>
+                      {(privateHedef!.karakter_adi ?? privateHedef!.email)[0].toUpperCase()}
                     </div>
-                    <div>
-                      <h2 className="text-white text-sm tracking-widest">{privateHedef.karakter_adi ?? privateHedef.email}</h2>
-                      <p className="text-xs" style={{ color: `${rolRenk[privateHedef.rol]}80` }}>{rolEtiket[privateHedef.rol]}</p>
+                    <div className="min-w-0">
+                      <h2 className="text-white text-sm tracking-widest truncate">{privateHedef!.karakter_adi ?? privateHedef!.email}</h2>
+                      <p className="text-[10px] md:text-xs truncate" style={{ color: `${rolRenk[privateHedef!.rol]}80` }}>{rolEtiket[privateHedef!.rol]}</p>
                     </div>
                   </>
-                ) : null}
-              </div>
+                )}
+              </>
+            ) : (
+              <p className="text-white/20 text-xs tracking-[0.2em] uppercase">Bir kanal seçin</p>
+            )}
+          </div>
 
-              {/* Mesajlar */}
-              <div className="flex-1 overflow-y-auto px-6 py-4 flex flex-col gap-2"
-                style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(168,85,247,0.4) transparent' }}>
-                {aktifMesajlar.map((m, i) => {
-                  const onceki = i > 0 ? aktifMesajlar[i - 1] : null
-                  const benimMi = mod === 'kanal'
-                    ? (m as Mesaj).kullanici_id === kullanici?.id
-                    : (m as PrivateMesaj).gonderen_id === kullanici?.id
+          {/* MESAJLAR ALANI */}
+          <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 flex flex-col gap-2"
+            style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(168,85,247,0.4) transparent' }}>
+            {(aktifKanal || privateHedef) ? (
+              aktifMesajlar.map((m, i) => {
+                const onceki = i > 0 ? aktifMesajlar[i - 1] : null
+                const benimMi = mod === 'kanal'
+                  ? (m as Mesaj).kullanici_id === kullanici?.id
+                  : (m as PrivateMesaj).gonderen_id === kullanici?.id
 
-                  const gonderenAdi = mod === 'kanal'
-                    ? ((m as Mesaj).karakter_adi || (m as Mesaj).kullanici_email)
-                    : ((m as PrivateMesaj).gonderen_karakter || (m as PrivateMesaj).gonderen_email)
+                const gonderenAdi = mod === 'kanal'
+                  ? ((m as Mesaj).karakter_adi || (m as Mesaj).kullanici_email)
+                  : ((m as PrivateMesaj).gonderen_karakter || (m as PrivateMesaj).gonderen_email)
 
-                  const gonderenRol = mod === 'kanal' ? (m as Mesaj).kullanici_rol : 'oyun_arkadasi'
+                const gonderenRol = mod === 'kanal' ? (m as Mesaj).kullanici_rol : 'oyun_arkadasi'
+                const suankiGonderen = mod === 'kanal' ? (m as Mesaj).kullanici_id : (m as PrivateMesaj).gonderen_id
+                const oncekiGonderen = onceki ? (mod === 'kanal' ? (onceki as Mesaj).kullanici_id : (onceki as PrivateMesaj).gonderen_id) : null
+                const ayniGonderen = oncekiGonderen === suankiGonderen
+                const buTarih = tarihStr(m.created_at)
+                const oncekiTarih = onceki ? tarihStr(onceki.created_at) : null
+                const yeniGun = oncekiTarih !== buTarih
 
-                  const suankiGonderen = mod === 'kanal' ? (m as Mesaj).kullanici_id : (m as PrivateMesaj).gonderen_id
-                  const oncekiGonderen = onceki
-                    ? mod === 'kanal' ? (onceki as Mesaj).kullanici_id : (onceki as PrivateMesaj).gonderen_id
-                    : null
-                  const ayniGonderen = oncekiGonderen === suankiGonderen
-
-                  const buTarih = tarihStr(m.created_at)
-                  const oncekiTarih = onceki ? tarihStr(onceki.created_at) : null
-                  const yeniGun = oncekiTarih !== buTarih
-
-                  return (
-                    <div key={m.id}>
-                      {yeniGun && (
-                        <div className="flex items-center gap-4 my-3">
-                          <div className="flex-1 h-px bg-white/5" />
-                          <span className="text-white/20 text-xs tracking-wider">{buTarih}</span>
-                          <div className="flex-1 h-px bg-white/5" />
+                return (
+                  <div key={m.id}>
+                    {yeniGun && (
+                      <div className="flex items-center gap-4 my-4">
+                        <div className="flex-1 h-px bg-white/5" />
+                        <span className="text-white/20 text-[10px] tracking-widest uppercase">{buTarih}</span>
+                        <div className="flex-1 h-px bg-white/5" />
+                      </div>
+                    )}
+                    <div className={`flex gap-2 md:gap-3 ${benimMi ? 'flex-row-reverse' : 'flex-row'}`}>
+                      {!ayniGonderen ? (
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] shrink-0 mt-1"
+                          style={{ background: `${rolRenk[gonderenRol] ?? '#6b7280'}20`, border: `1px solid ${rolRenk[gonderenRol] ?? '#6b7280'}40`, color: rolRenk[gonderenRol] ?? '#6b7280' }}>
+                          {gonderenAdi?.[0]?.toUpperCase()}
                         </div>
+                      ) : (
+                        <div className="w-7 shrink-0" />
                       )}
-                      <div className={`flex gap-3 ${benimMi ? 'flex-row-reverse' : 'flex-row'}`}>
-                        {!ayniGonderen ? (
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 mt-1"
-                            style={{ background: `${rolRenk[gonderenRol] ?? '#6b7280'}20`, border: `1px solid ${rolRenk[gonderenRol] ?? '#6b7280'}40`, color: rolRenk[gonderenRol] ?? '#6b7280' }}>
-                            {gonderenAdi?.[0]?.toUpperCase()}
-                          </div>
-                        ) : (
-                          <div className="w-7 shrink-0" />
-                        )}
 
-                        <div className={`flex flex-col gap-0.5 max-w-md ${benimMi ? 'items-end' : 'items-start'}`}>
-                          {!ayniGonderen && (
-                            <div className={`flex items-baseline gap-2 ${benimMi ? 'flex-row-reverse' : ''}`}>
-                              <span className="text-xs font-medium" style={{ color: rolRenk[gonderenRol] ?? '#6b7280' }}>
-                                {gonderenAdi}
-                              </span>
-                              <span className="text-white/15 text-xs">{zaman(m.created_at)}</span>
-                            </div>
-                          )}
-                          <div className="px-4 py-2.5 text-sm leading-relaxed max-w-full break-words"
-                            style={{
-                              background: benimMi ? 'rgba(168,85,247,0.15)' : 'rgba(255,255,255,0.05)',
-                              border: benimMi ? '1px solid rgba(168,85,247,0.25)' : '1px solid rgba(255,255,255,0.06)',
-                              color: 'rgba(255,255,255,0.8)',
-                              borderRadius: benimMi ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                            }}>
-                            {m.icerik}
+                      <div className={`flex flex-col gap-0.5 max-w-[85%] md:max-w-md ${benimMi ? 'items-end' : 'items-start'}`}>
+                        {!ayniGonderen && (
+                          <div className={`flex items-baseline gap-2 mb-0.5 ${benimMi ? 'flex-row-reverse' : ''}`}>
+                            <span className="text-[10px] md:text-xs font-medium" style={{ color: rolRenk[gonderenRol] ?? '#6b7280' }}>
+                              {gonderenAdi}
+                            </span>
+                            <span className="text-white/15 text-[9px]">{zaman(m.created_at)}</span>
                           </div>
-                          {ayniGonderen && (
-                            <span className="text-white/10 text-xs px-1">{zaman(m.created_at)}</span>
-                          )}
+                        )}
+                        <div className="px-3 md:px-4 py-2 text-sm leading-relaxed break-words"
+                          style={{
+                            background: benimMi ? 'rgba(168,85,247,0.12)' : 'rgba(255,255,255,0.05)',
+                            border: benimMi ? '1px solid rgba(168,85,247,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                            color: 'rgba(255,255,255,0.8)',
+                            borderRadius: benimMi ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                          }}>
+                          {m.icerik}
                         </div>
+                        {ayniGonderen && (
+                          <span className="text-white/10 text-[9px] mt-0.5">{zaman(m.created_at)}</span>
+                        )}
                       </div>
                     </div>
-                  )
-                })}
-                <div ref={mesajSonuRef} />
-              </div>
-
-              {/* Input */}
-              <div className="px-6 py-4 border-t border-white/5 shrink-0">
-                <div className="flex items-end gap-3"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '12px' }}>
-                  <textarea
-                    value={mod === 'kanal' ? yeniMesaj : ozelMesaj}
-                    onChange={e => mod === 'kanal' ? setYeniMesaj(e.target.value) : setOzelMesaj(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        mod === 'kanal' ? mesajGonder() : privateMesajGonder()
-                      }
-                    }}
-                    placeholder={
-                      mod === 'kanal'
-                        ? `${aktifKanal?.isim} kanalına yaz...`
-                        : `${privateHedef?.karakter_adi ?? privateHedef?.email}'e özel mesaj...`
-                    }
-                    rows={1}
-                    className="flex-1 bg-transparent text-white/80 text-sm placeholder-white/20 resize-none focus:outline-none leading-relaxed"
-                    style={{ maxHeight: '120px' }}
-                  />
-                  <button
-                    onClick={mod === 'kanal' ? mesajGonder : privateMesajGonder}
-                    disabled={gonderiyor || !(mod === 'kanal' ? yeniMesaj.trim() : ozelMesaj.trim())}
-                    className="shrink-0 px-4 py-2 text-xs tracking-widest uppercase transition-all disabled:opacity-30"
-                    style={{ border: '1px solid rgba(168,85,247,0.4)', color: 'rgba(168,85,247,0.8)', background: 'rgba(168,85,247,0.08)' }}
-                  >
-                    {gonderiyor ? '...' : '→'}
-                  </button>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="flex-1 flex items-center justify-center opacity-20">
+                <div className="text-center">
+                  <span className="text-4xl mb-4 block">◈</span>
+                  <p className="text-xs tracking-widest uppercase">Bir bağlantı noktası seçin</p>
                 </div>
-                <p className="text-white/10 text-xs mt-2 pl-1">Enter · Shift+Enter yeni satır</p>
               </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-4 text-center">
-                <span className="text-5xl opacity-10">◈</span>
-                <p className="text-white/20 text-sm tracking-wider">Bir kanal seç veya özel mesaj gönder.</p>
+            )}
+            <div ref={mesajSonuRef} />
+          </div>
+
+          {/* MESAJ YAZMA ALANI */}
+          {(aktifKanal || privateHedef) && (
+            <div className="px-4 md:px-6 py-4 border-t border-white/5 bg-black/60 shrink-0">
+              <div className="flex items-end gap-2 md:gap-3 bg-white/[0.03] border border-white/10 rounded-lg p-2 md:p-3">
+                <textarea
+                  value={mod === 'kanal' ? yeniMesaj : ozelMesaj}
+                  onChange={e => mod === 'kanal' ? setYeniMesaj(e.target.value) : setOzelMesaj(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      mod === 'kanal' ? mesajGonder() : privateMesajGonder()
+                    }
+                  }}
+                  placeholder="Mesajınızı yazın..."
+                  rows={1}
+                  className="flex-1 bg-transparent text-white/80 text-sm placeholder-white/20 resize-none focus:outline-none py-1"
+                  style={{ maxHeight: '120px' }}
+                />
+                <button
+                  onClick={mod === 'kanal' ? mesajGonder : privateMesajGonder}
+                  disabled={gonderiyor || !(mod === 'kanal' ? yeniMesaj.trim() : ozelMesaj.trim())}
+                  className="shrink-0 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center transition-all disabled:opacity-20"
+                  style={{ border: '1px solid rgba(168,85,247,0.4)', color: 'rgba(168,85,247,0.8)', background: 'rgba(168,85,247,0.1)' }}
+                >
+                  {gonderiyor ? '...' : '→'}
+                </button>
               </div>
             </div>
           )}
