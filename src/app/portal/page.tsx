@@ -154,6 +154,11 @@ export default function Portal() {
             <span>✦</span>
             <span className="hidden sm:inline">Kadim </span>Arşiv
           </Link>
+          <Link href="/chat"
+  className="flex items-center gap-2 text-rose-400/40 text-xs tracking-widest uppercase hover:text-rose-400 transition-all border border-rose-400/15 hover:border-rose-400/40 px-3 py-1.5">
+  <span>◈</span>
+  <span className="hidden sm:inline">Sesler</span>
+</Link>
           <Link href="/magaza"
             className="flex items-center gap-2 text-amber-400/40 text-xs tracking-widest uppercase hover:text-amber-400 transition-all border border-amber-400/15 hover:border-amber-400/40 px-3 py-1.5">
             <span>◈</span>
