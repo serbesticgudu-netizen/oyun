@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type RehberBolumu = {
   id: string
@@ -43,6 +45,23 @@ const borderRenkler = [
   '#14b8a6',
   '#e879f9',
 ]
+
+const MarkdownComponents = {
+  p: ({ ...props }) => <p className="mb-4 last:mb-0 leading-relaxed" {...props} />,
+  strong: ({ ...props }) => <strong className="text-white font-bold tracking-wide" {...props} />,
+  em: ({ ...props }) => <em className="italic text-white/90" {...props} />,
+  ul: ({ ...props }) => <ul className="list-disc list-inside mb-4 space-y-2 ml-2" {...props} />,
+  li: ({ ...props }) => <li className="text-white/70" {...props} />,
+  a: ({ ...props }) => (
+    <a 
+      className="text-fuchsia-400 hover:text-fuchsia-300 underline underline-offset-4 transition-colors" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props} 
+    />
+  ),
+  h3: ({ ...props }) => <h3 className="text-lg text-white mt-6 mb-2 tracking-widest uppercase" {...props} />,
+}
 
 export default function Rehber() {
   const [bolumler, setBolumler] = useState<RehberBolumu[]>([])
@@ -254,8 +273,16 @@ export default function Rehber() {
                   <h2 className="text-white tracking-widest uppercase text-2xl">{sonBolum.baslik}</h2>
                   <div className="w-full h-px my-4"
                     style={{ background: `linear-gradient(90deg, ${borderRenkler[10]}60, transparent)` }} />
-                  <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{sonBolum.icerik}</p>
-                </div>
+{/* Eski hali: <p className="text-white/60 text-sm leading-relaxed tracking-wide whitespace-pre-line">{sonBolum.icerik}</p> */}
+
+<div className="text-white/60 text-sm leading-relaxed tracking-wide">
+  <ReactMarkdown 
+    remarkPlugins={[remarkGfm]} 
+    components={MarkdownComponents}
+  >
+    {sonBolum.icerik}
+  </ReactMarkdown>
+</div>                </div>
                 {profil?.is_admin && (
                   <span onClick={(e) => handleEdit(e, sonBolum)}
                     className="absolute top-4 right-4 z-20 text-white/30 hover:text-white text-xs cursor-pointer">✎</span>
@@ -285,8 +312,16 @@ export default function Rehber() {
                   <span onClick={() => setSeciliBolum(null)} className="text-white/40 hover:text-white text-2xl cursor-pointer">×</span>
                 </div>
                 <div className="p-8 flex-1 overflow-y-auto">
-                  <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">{seciliBolum.icerik}</p>
-                </div>
+{/* Eski hali: <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">{seciliBolum.icerik}</p> */}
+
+<div className="text-white/70 text-sm leading-relaxed">
+  <ReactMarkdown 
+    remarkPlugins={[remarkGfm]} 
+    components={MarkdownComponents}
+  >
+    {seciliBolum.icerik}
+  </ReactMarkdown>
+</div>                </div>
               </div>
             </div>
           )
