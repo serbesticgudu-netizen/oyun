@@ -78,7 +78,7 @@ export default function Chat() {
   const aktifKanalRef = useRef<Kanal | null>(null)
   const kullaniciRef = useRef<Kullanici | null>(null)
   const supabase = createClient()
-  const [sidebarAcik, setSidebarAcik] = useState(false)
+  const [sidebarAcik, setSidebarAcik] = useState(true)
 
   // ref'leri güncel tut
   useEffect(() => { aktifKanalRef.current = aktifKanal }, [aktifKanal])
