@@ -21,6 +21,7 @@ export default function Portal() {
   const [isEditing, setIsEditing] = useState(false)
   const [editedKarakter, setEditedKarakter] = useState<Partial<Karakter> | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [okunmamis, setOkunmamis] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -35,6 +36,12 @@ export default function Portal() {
       setKarakter(k)
       setAyFazi(ayFaziniHesapla())
       setYukleniyor(false)
+      const { count } = await supabase
+  .from('private_mesajlar')
+  .select('*', { count: 'exact', head: true })
+  .eq('alici_id', user.id)
+  .eq('okundu', false)
+setOkunmamis(count ?? 0)
     }
     yukle()
   }, [])
@@ -154,10 +161,16 @@ export default function Portal() {
             <span>✦</span>
             <span className="hidden sm:inline">Kadim </span>Arşiv
           </Link>
-          <Link href="/chat"
-  className="flex items-center gap-2 text-rose-400/40 text-xs tracking-widest uppercase hover:text-rose-400 transition-all border border-rose-400/15 hover:border-rose-400/40 px-3 py-1.5">
+<Link href="/chat"
+  className="relative flex items-center gap-2 text-rose-400/40 text-xs tracking-widest uppercase hover:text-rose-400 transition-all border border-rose-400/15 hover:border-rose-400/40 px-3 py-1.5">
   <span>◈</span>
   <span className="hidden sm:inline">Sesler</span>
+  {okunmamis > 0 && (
+    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
+      style={{ background: '#e879f9', color: '#000', fontSize: '9px', boxShadow: '0 0 8px rgba(232,121,249,0.8)' }}>
+      {okunmamis > 9 ? '9+' : okunmamis}
+    </span>
+  )}
 </Link>
           <Link href="/magaza"
             className="flex items-center gap-2 text-amber-400/40 text-xs tracking-widest uppercase hover:text-amber-400 transition-all border border-amber-400/15 hover:border-amber-400/40 px-3 py-1.5">

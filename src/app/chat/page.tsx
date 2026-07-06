@@ -42,6 +42,11 @@ type Kullanici = {
   karakter_adi?: string
 }
 
+type KanalOkunmamis = {
+  kanal_id: string
+  sayi: number
+}
+
 const rolRenk: Record<string, string> = {
   kabileli: '#e879f9',
   oyun_arkadasi: '#22d3ee',
@@ -71,6 +76,7 @@ export default function Chat() {
   const [gonderiyor, setGonderiyor] = useState(false)
   const mesajSonuRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+  const [kanalOkunmamis, setKanalOkunmamis] = useState<KanalOkunmamis[]>([])
 
   useEffect(() => {
     async function yukle() {
@@ -94,6 +100,34 @@ export default function Chat() {
         .from('chat_kanallari').select('*').eq('aktif', true).order('created_at')
       setKanallar(kanallarData ?? [])
 
+      // Kanal bazlı okunmamış — son görülen mesajı localStorage'da tut
+const { data: sonMesajlar } = await supabase
+  .from('chat_mesajlari')
+  .select('kanal_id, id, created_at')
+  .order('created_at', { ascending: false })
+
+if (sonMesajlar) {
+  const okunmamislar: KanalOkunmamis[] = []
+  const kanalIds = [...new Set(sonMesajlar.map(m => m.kanal_id))]
+  
+  kanalIds.forEach(kanalId => {
+    const sonGorulme = localStorage.getItem(`kanal_gorulme_${kanalId}`)
+    const kanalMesajlari = sonMesajlar.filter(m => m.kanal_id === kanalId)
+    
+    if (!sonGorulme) {
+      okunmamislar.push({ kanal_id: kanalId, sayi: kanalMesajlari.length })
+    } else {
+      const yeniMesajlar = kanalMesajlari.filter(m => 
+        new Date(m.created_at) > new Date(sonGorulme) &&
+        m.id !== kullanici?.id
+      )
+      if (yeniMesajlar.length > 0) {
+        okunmamislar.push({ kanal_id: kanalId, sayi: yeniMesajlar.length })
+      }
+    }
+  })
+  setKanalOkunmamis(okunmamislar)
+}
       // Okunmamış private mesaj sayısı
       const { count } = await supabase
         .from('private_mesajlar')
@@ -267,7 +301,8 @@ export default function Chat() {
               return (
                 <button
                   key={kanal.id}
-                  onClick={() => { if (erisim) { setAktifKanal(kanal); setMod('kanal'); setPrivateHedef(null) } }}
+                  onClick={() => { if (erisim) { setAktifKanal(kanal); setMod('kanal'); setPrivateHedef(null); localStorage.setItem(`kanal_gorulme_${kanal.id}`, new Date().toISOString())
+setKanalOkunmamis(prev => prev.filter(k => k.kanal_id !== kanal.id))} }}
                   className="flex items-center gap-3 px-3 py-2.5 text-left transition-all rounded"
                   style={{
                     background: aktifKanal?.id === kanal.id ? 'rgba(168,85,247,0.15)' : 'transparent',
@@ -279,6 +314,18 @@ export default function Chat() {
                   <span className="text-base">{kanal.simge}</span>
                   <div className="flex flex-col gap-0.5 min-w-0">
                     <span className="text-white/70 text-xs tracking-wider truncate">{kanal.isim}</span>
+                    <div className="flex items-center gap-2 min-w-0">
+  <span className="text-white/70 text-xs tracking-wider truncate">{kanal.isim}</span>
+  {(() => {
+    const sayi = kanalOkunmamis.find(k => k.kanal_id === kanal.id)?.sayi
+    return sayi && sayi > 0 ? (
+      <span className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold"
+        style={{ background: '#a855f7', color: '#fff', fontSize: '9px', boxShadow: '0 0 6px rgba(168,85,247,0.7)' }}>
+        {sayi > 9 ? '9+' : sayi}
+      </span>
+    ) : null
+  })()}
+</div>
                     <span className="text-white/20 text-xs truncate">{kanal.aciklama}</span>
                   </div>
                 </button>
