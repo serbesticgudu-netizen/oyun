@@ -31,7 +31,7 @@ const tipStil: Record<string, { renk: string; glow: string; etiket: string; bg: 
   gorev:    { renk: '#22d3ee', glow: '0 0 14px rgba(34,211,238,0.7)',   etiket: 'GÖREV',         bg: 'rgba(34,211,238,0.1)',  rgb: '34,211,238'  },
   etkinlik: { renk: '#f0c040', glow: '0 0 14px rgba(240,192,64,0.7)',   etiket: 'ETKİNLİK',     bg: 'rgba(240,192,64,0.1)',  rgb: '240,192,64'  },
   tehlike:  { renk: '#ef4444', glow: '0 0 14px rgba(239,68,68,0.7)',    etiket: 'TEHLİKE',      bg: 'rgba(239,68,68,0.1)',   rgb: '239,68,68'   },
-  kesfet:   { renk: '#34d399', glow: '0 0 14px rgba(52,211,153,0.7)',   etiket: 'KEŞFEDİLECEK', bg: 'rgba(52,211,153,0.1)', rgb: '52,211,153'  },
+  kesfet:   { renk: '#34d399', glow: '0 0 14px rgba(52,211,153,0.7)',   etiket: 'KEŞFET', bg: 'rgba(52,211,153,0.1)', rgb: '52,211,153'  },
 }
 
 const durumEtiket = { aktif: 'AKTİF', uyku: 'UYKU', kapali: 'KAPALI' }
@@ -51,7 +51,11 @@ export default function Harita() {
   const leafletRef = useRef<any>(null)
   const markersRef = useRef<Record<string, any>>({})
 
-  const handleFilterClick = (tip: string | null) => {
+const handleFilterClick = (tip: string | null) => {
+    // Kategoriye tıklandığında açık olan panelleri kapat
+    setSecili(null)
+    setEditingNokta(null)
+    
     if (isListOpen && filtre === tip) {
       setIsListOpen(false)
     } else {
@@ -143,12 +147,19 @@ export default function Harita() {
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
     script.onload = () => {
       const L = (window as any).L
-      const map = L.map(mapRef.current, {
-        center: [38.2, 27.2], zoom: 8,
-        zoomControl: true, attributionControl: false,
-      })
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map)
-      leafletRef.current = map
+// Harita başlatma kısmında bunu değiştir:
+const map = L.map(mapRef.current, {
+  center: [38.2, 27.2], 
+  zoom: 8,
+  zoomControl: false, // Varsayılan butonları kapatıyoruz
+  attributionControl: false,
+})
+
+// Butonları manuel olarak sağ üste ekliyoruz:
+L.control.zoom({ position: 'topright' }).addTo(map)
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map)
+leafletRef.current = map
     }
     document.head.appendChild(script)
 
@@ -248,7 +259,7 @@ export default function Harita() {
         <div className="flex items-center justify-between px-8 py-4 border-b border-fuchsia-500/10 shrink-0">
           <div className="flex flex-col gap-0.5">
             <p className="text-fuchsia-400/40 text-xs tracking-[0.4em] uppercase">Theia Kabilesi</p>
-            <h1 className="text-white text-lg tracking-widest uppercase">Geçit Enerji Haritası</h1>
+            <h1 className="text-white text-lg tracking-widest">Gaia Haritası</h1>
           </div>
           <div className="flex items-center gap-4">
             {profil?.is_admin && !editingNokta && (
@@ -275,41 +286,51 @@ export default function Harita() {
           </div>
         </div>
 
-        {/* Filtre bar */}
-        <div className="shrink-0 border-b border-white/10 bg-black/20">
-          <div className="grid grid-cols-3 lg:grid-cols-6">
-            <button
-              onClick={() => handleFilterClick(null)}
-              className="py-4 px-3 text-xs tracking-widest uppercase transition-all flex flex-col items-center gap-1.5 hover:bg-white/10"
-              style={{
-                backgroundColor: !filtre ? '#4a4a4a' : 'rgba(255,255,255,0.05)',
-                color: !filtre ? 'white' : 'rgba(255,255,255,0.6)',
-              }}
-            >
-              <span className="text-base">◎</span>
-              <span>Tümü</span>
-              <span className="opacity-60 text-xs">({noktalar.length})</span>
-            </button>
+{/* Filtre bar - Tek Sıra ve Renkli Başlangıç Düzen */}
+        <div className="shrink-0 border-b border-white/10 bg-black/60 overflow-hidden">
+          <div className="flex w-full">
+            {Object.entries(tipStil).map(([tip, stil]) => {
+              const isSelected = filtre === tip;
+              
+              // Ortak stil ayarları
+              const normalShadow = "none";
+              const activeShadow = `0 0 12px ${stil.renk}`;
+              const activeBg = `${stil.renk}20`;
 
-            {Object.entries(tipStil).map(([tip, stil]) => (
-              <button
-                key={tip}
-                onClick={() => handleFilterClick(tip)}
-                className="py-4 px-3 text-xs tracking-widest uppercase transition-all flex flex-col items-center gap-1.5 hover:bg-white/10"
-                style={{
-                  backgroundColor: filtre === tip ? stil.renk : 'rgba(255,255,255,0.05)',
-                  color: filtre === tip ? (tip === 'etkinlik' ? '#333' : 'white') : 'rgba(255,255,255,0.6)',
-                }}
-              >
-                <span className="text-base">
-                  {tip === 'gecit' ? '◈' : tip === 'gorev' ? '⬡' : tip === 'etkinlik' ? '◉' : tip === 'tehlike' ? '⚠' : '✦'}
-                </span>
-                <span>{stil.etiket}</span>
-                <span className="opacity-60" style={{ fontSize: '10px' }}>
-                  ({noktalar.filter(n => n.tip === tip).length})
-                </span>
-              </button>
-            ))}
+              return (
+                <button
+                  key={tip}
+                  onClick={() => handleFilterClick(tip)}
+                  className="flex-1 py-3 px-1 text-[9px] md:text-[10px] tracking-widest uppercase transition-all duration-300 flex flex-col items-center gap-1.5 border-r border-white/5 last:border-r-0"
+                  style={{
+                    color: stil.renk, // Her zaman kendi renginde
+                    backgroundColor: isSelected ? activeBg : 'transparent',
+                    textShadow: isSelected ? activeShadow : normalShadow,
+                    opacity: isSelected ? 1 : 0.7, // Seçili değilken hafif mat, seçilince tam parlak
+                  }}
+                  onMouseEnter={(e) => { 
+                    e.currentTarget.style.opacity = "1";
+                    e.currentTarget.style.textShadow = activeShadow;
+                    e.currentTarget.style.backgroundColor = activeBg;
+                  }}
+                  onMouseLeave={(e) => { 
+                    if (!isSelected) {
+                      e.currentTarget.style.opacity = "0.7";
+                      e.currentTarget.style.textShadow = normalShadow;
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <span className="text-sm md:text-base transition-transform duration-300" 
+                        style={{ transform: isSelected ? 'scale(1.1)' : 'scale(1)' }}>
+                    {tip === 'gecit' ? '◈' : tip === 'gorev' ? '⬡' : tip === 'etkinlik' ? '◉' : tip === 'tehlike' ? '⚠' : '✦'}
+                  </span>
+                  <span className="font-medium tracking-[0.2em] transition-colors">
+                    {stil.etiket.split(' ')[0]}
+                  </span>
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -340,10 +361,15 @@ export default function Harita() {
             `}</style>
 
             {/* Sol liste */}
-            <div
-              className={`nokta-liste absolute top-0 left-0 bottom-0 flex-col gap-1 z-[999] p-3 overflow-y-auto ${isListOpen ? 'flex' : 'hidden'}`}
-              style={{ maxWidth: '260px', paddingBottom: '12px', background: 'linear-gradient(to right, rgba(0,0,0,0.7) 60%, transparent)' }}
-            >
+{/* Sol liste */}
+<div
+  className={`nokta-liste absolute top-0 left-0 bottom-0 flex-col gap-1 z-[999] p-3 overflow-y-auto ${isListOpen ? 'flex' : 'hidden'}`}
+  style={{ 
+    maxWidth: '260px', 
+    paddingBottom: '12px', 
+    background: 'transparent' // Siyah degradeyi kaldırdık, artık harita tam görünecek
+  }}
+>
               {filtrelenmis.map(nokta => {
                 const stil = tipStil[nokta.tip]
                 return (
@@ -488,22 +514,38 @@ export default function Harita() {
                         </span>
                         <h2 className="text-white text-base tracking-wider leading-snug">{secili.isim}</h2>
                       </div>
-                      <div className="flex items-center gap-4 shrink-0">
-                        {profil?.is_admin && (
-                          <button
-                            onClick={() => { setEditingNokta(secili); setSecili(null) }}
-                            className="text-cyan-400/60 hover:text-cyan-400 text-xs uppercase tracking-widest"
-                          >
-                            Düzenle
-                          </button>
-                        )}
-                        <button
-                          onClick={() => setSecili(null)}
-                          className="text-white/20 hover:text-white/60 transition-all text-xl"
-                        >
-                          ×
-                        </button>
-                      </div>
+<div className="flex items-center gap-3 shrink-0">
+  {profil?.is_admin && (
+    <button
+      onClick={() => { setEditingNokta(secili); setSecili(null) }}
+      className="text-cyan-400/40 hover:text-cyan-400 text-[10px] uppercase tracking-widest border border-cyan-400/20 px-2 py-1 transition-all"
+    >
+      Düzenle
+    </button>
+  )}
+  
+  {/* Yeni Geri Oku Butonu */}
+  <button
+    onClick={() => setSecili(null)}
+    className="group flex items-center justify-center w-8 h-8 rounded-full border border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/30 transition-all shadow-lg"
+    title="Kapat"
+  >
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className="text-white/30 group-hover:text-white transition-colors"
+    >
+      <path d="m15 18-6-6 6-6"/>
+    </svg>
+  </button>
+</div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-xs tracking-widest uppercase px-2 py-1 border w-fit ${
