@@ -313,7 +313,8 @@ function privateSec(k: Kullanici) {
   const aktifMesajlar = mod === 'kanal' ? mesajlar : privateMesajlar
 
 return (
-    <main className="h-screen bg-black flex flex-col overflow-hidden relative">
+// Chat sayfasının en başındaki return kısmı
+<main className="h-screen bg-black flex flex-col overflow-hidden relative w-full overflow-x-hidden">
       {/* Arka plan katmanları */}
       <div className="fixed inset-0 opacity-10"
         style={{ backgroundImage: "url('/theia-bg.jpg')", backgroundSize: 'cover' }} />
@@ -543,20 +544,21 @@ return (
           {(aktifKanal || privateHedef) && (
             <div className="px-4 md:px-6 py-4 border-t border-white/5 bg-black/60 shrink-0">
               <div className="flex items-end gap-2 md:gap-3 bg-white/[0.03] border border-white/10 rounded-lg p-2 md:p-3">
-                <textarea
-                  value={mod === 'kanal' ? yeniMesaj : ozelMesaj}
-                  onChange={e => mod === 'kanal' ? setYeniMesaj(e.target.value) : setOzelMesaj(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      mod === 'kanal' ? mesajGonder() : privateMesajGonder()
-                    }
-                  }}
-                  placeholder="Mesajınızı yazın..."
-                  rows={1}
-                  className="flex-1 bg-transparent text-white/80 text-sm placeholder-white/20 resize-none focus:outline-none py-1"
-                  style={{ maxHeight: '120px' }}
-                />
+<textarea
+  value={mod === 'kanal' ? yeniMesaj : ozelMesaj}
+  onChange={e => mod === 'kanal' ? setYeniMesaj(e.target.value) : setOzelMesaj(e.target.value)}
+  onKeyDown={e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      mod === 'kanal' ? mesajGonder() : privateMesajGonder()
+    }
+  }}
+  placeholder="Mesajınızı yazın..."
+  rows={1}
+  /* text-sm yerine text-[16px] md:text-sm ekledik */
+  className="flex-1 bg-transparent text-white/80 text-[16px] md:text-sm placeholder-white/20 resize-none focus:outline-none py-1"
+  style={{ maxHeight: '120px' }}
+/>
                 <button
                   onClick={mod === 'kanal' ? mesajGonder : privateMesajGonder}
                   disabled={gonderiyor || !(mod === 'kanal' ? yeniMesaj.trim() : ozelMesaj.trim())}

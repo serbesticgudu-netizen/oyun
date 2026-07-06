@@ -31,6 +31,12 @@ export const metadata = {
   },
   // -----------------------------
 }
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1, // Bu satır zoom yapılmasını engeller
+  userScalable: false, // Kullanıcının elle büyütmesini de kapatır (opsiyonel)
+}
 
 export default function RootLayout({
   children,
