@@ -1,0 +1,200 @@
+/* KOZMOGENEZ — token seti
+   primary:  #0A0118 (kozmik boşluk)
+   deep:     #1A0B2E (gotik mor)
+   glow:     #B026FF (elektrik menekşe)
+   accent:   #FF2DAF (sıcak fuşya)
+   ultra:    #6E00FF (mor ötesi)
+   text:     #E8D5FF (astral açık)
+   display face: 'Cinzel' (Yunan kökenli, taşa kazınmış his)
+   utility face: 'JetBrains Mono' (veri / kronometre okunuşu)
+*/
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 50% 30%, var(--theme-primary, #1a0b2e) 0%, #0a0118 70%);
+  overflow: hidden;
+  transition: background 1.2s ease;
+  font-family: "Inter", system-ui, sans-serif;
+  color: #e8d5ff;
+}
+
+.astralCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.overlay {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: 3rem 1.5rem 2rem;
+}
+
+.eraLabel {
+  font-family: "Cinzel", serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: #b026ff;
+  text-shadow: 0 0 12px #b026ff88;
+}
+
+/* --- Hafıza Panelleri --- */
+/* --- Hafıza Panelleri (Kutusuz, Minimalist) --- */
+.memoryPanel {
+  position: absolute;
+  top: 4rem; /* Ekranın EN ÜSTÜNDEN biraz boşluk bırakır */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+  padding: 0 1rem;
+  background: transparent !important; /* Kutuyu yok ettik */
+  border: none !important; /* Çerçeveyya veda */
+  backdrop-filter: none !important; /* Blur katmanını sildik */
+  box-shadow: none !important; /* Gölgeleri kaldırdık */
+  z-index: 10;
+}
+
+.panelEra {
+  display: block;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  opacity: 0.65;
+  margin-bottom: 0.5rem;
+}
+
+.panelTitle {
+  font-family: "Cinzel", serif;
+  font-size: 1.7rem;
+  margin: 0 0 0.6rem;
+  color: #f4e9ff;
+}
+
+.panelNarrative {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: #d9c6f5;
+  margin: 0 0 0.75rem;
+}
+
+.panelCaption {
+  font-style: italic;
+  font-size: 0.85rem;
+  color: #ff2daf;
+  margin: 0;
+}
+
+.ink-wash {
+  background-image: radial-gradient(ellipse at top left, rgba(176, 38, 255, 0.08), transparent 60%);
+}
+.gothic-etch {
+  background-image: repeating-linear-gradient(
+    115deg,
+    rgba(255, 255, 255, 0.02) 0px,
+    rgba(255, 255, 255, 0.02) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+.cyber-glitch {
+  box-shadow: inset 0 0 0 1px rgba(255, 45, 175, 0.25);
+}
+
+/* --- Kozmik Kronometre --- */
+.chronometer {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.yearsReadout {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  color: #f4e9ff;
+  text-shadow: 0 0 10px #ff2daf66;
+}
+
+.scrubBar {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 3px;
+  background: linear-gradient(90deg, #6e00ff, #b026ff, #ff2daf);
+  border-radius: 2px;
+  outline: none;
+  position: relative;
+}
+
+.scrubBar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f4e9ff;
+  box-shadow: 0 0 14px 3px #ff2dafcc;
+  cursor: pointer;
+}
+
+.milestoneMarks {
+  position: relative;
+  width: 100%;
+  height: 8px;
+}
+
+.markDot {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  background: #b026ff;
+  opacity: 0.6;
+  border-radius: 1px;
+}
+
+/* --- Hafıza Bozunması (Rewind) --- */
+.rewindGlitch {
+  animation: glitchShift 0.18s steps(2, end) infinite;
+}
+
+@keyframes glitchShift {
+  0% {
+    filter: hue-rotate(0deg) saturate(1);
+    transform: translate(0, 0);
+  }
+  25% {
+    filter: hue-rotate(-8deg) saturate(1.4);
+    transform: translate(-1px, 0.5px);
+  }
+  50% {
+    filter: hue-rotate(6deg) saturate(1.2);
+    transform: translate(1px, -0.5px);
+  }
+  100% {
+    filter: hue-rotate(0deg) saturate(1);
+    transform: translate(0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rewindGlitch {
+    animation: none;
+  }
+  .memoryPanel,
+  .scrubBar::-webkit-slider-thumb {
+    transition: none !important;
+  }
+}

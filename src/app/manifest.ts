@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Theia Kabilesi',
+    name: 'Tiyatro Theia',
     short_name: 'Theia',
-    description: 'Theia Kabilesi Enerji Portalı ve Geçit Haritası',
+    description: 'Tiyatro Theia Cyber-Pagan Platformu',
     start_url: '/',
     display: 'standalone',
     background_color: '#000000',
