@@ -277,7 +277,7 @@ leafletRef.current = map
                 }}
                 className="border border-emerald-500/50 text-emerald-400/80 px-3 py-1.5 text-xs tracking-widest uppercase hover:bg-emerald-500/10 transition-all"
               >
-                + Yeni Nokta
+                + 
               </button>
             )}
             <Link href="/portal" className="border border-white/10 text-white/30 px-4 py-2 text-xs tracking-widest uppercase hover:border-white/30 hover:text-white/60 transition-all">
