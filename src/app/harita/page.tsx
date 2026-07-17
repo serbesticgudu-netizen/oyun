@@ -280,7 +280,7 @@ leafletRef.current = map
                 + 
               </button>
             )}
-            <Link href="/portal" className="border border-white/10 text-white/30 px-4 py-2 text-xs tracking-widest uppercase hover:border-white/30 hover:text-white/60 transition-all">
+            <Link href="/portal" className="border border-white/10 text-white/30 hover:border-white/30 hover:text-white/60 px-3 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs tracking-widest uppercase transition-all bg-black/40">
               ← Portal
             </Link>
           </div>
