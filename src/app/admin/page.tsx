@@ -294,14 +294,14 @@ export default function Admin() {
         </div>
 
         {/* Sekmeler — yatay scroll mobilde */}
-        <div className="flex gap-1 md:gap-2 overflow-x-auto pb-1">
-          {tablar.map(tab => (
-            <button key={tab.key} onClick={() => setAktifTab(tab.key)}
-              className={`px-3 md:px-6 py-2 md:py-3 text-xs tracking-widest uppercase border transition-all whitespace-nowrap shrink-0 ${aktifTab === tab.key ? 'border-white/40 text-white bg-white/10' : 'border-white/10 text-white/30 hover:border-white/20'}`}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
+<div className="flex flex-wrap gap-1.5 md:gap-2 w-full">
+  {tablar.map(tab => (
+    <button key={tab.key} onClick={() => setAktifTab(tab.key)}
+      className={`px-2.5 md:px-6 py-2 md:py-3 text-[10px] md:text-xs tracking-widest uppercase border transition-all flex-1 md:flex-initial text-center ${aktifTab === tab.key ? 'border-white/40 text-white bg-white/10' : 'border-white/10 text-white/30 hover:border-white/20'}`}>
+      {tab.label}
+    </button>
+  ))}
+</div>
 
         {/* KULLANICILAR */}
         {aktifTab === 'kullanicilar' && (
