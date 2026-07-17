@@ -4,8 +4,8 @@ const bolumler = [
   {
     href: '/kozmogenez',
     baslik: 'Sıfırıncı Kayıt: Kozmogenez',
-    aciklama: 'Büyük Patlama\'dan günümüze kâinatın hafızası. Zamanın ve mekânın ötesine yolculuk.',
-    sembol: '𐃏', // Kozmik döngüyü temsil eden kadim sembol
+    aciklama: 'Büyük Patlama\'dan günümüze kâinatın hafızası. Zamanın ötesine yolculuk.',
+    sembol: '𐃏',
   },
   {
     href: '/arsiv/tabletler',
@@ -36,57 +36,69 @@ const bolumler = [
 export default function Arsiv() {
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center py-12"
+      className="h-screen w-full flex flex-col items-center justify-center p-4 md:p-8 overflow-hidden relative"
       style={{
         backgroundImage: "url('/theia-bg.jpg')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }}
     >
-      <div className="fixed inset-0 bg-black/75" />
+      <div className="fixed inset-0 bg-black/80" />
       
-      <div className="relative z-10 w-full max-w-3xl px-8 flex flex-col items-center gap-12">
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-white/30 text-xs tracking-[0.4em] uppercase">Theia Kabilesi Arşivi</p>
-          <h1 className="text-white text-4xl tracking-widest uppercase text-center">Kadim Kayıtlar</h1>
-          <div className="w-24 h-px bg-white/20 mt-2" />
+      {/* SAĞ ÜST KÖŞEDEKİ PORTAL LİNKİ */}
+      <Link
+        href="/portal"
+        className="absolute top-4 right-4 md:top-8 md:right-8 z-20 border border-white/10 text-white/30 hover:border-white/30 hover:text-white/60 px-3 py-1.5 md:px-4 md:py-2 text-[10px] md:text-xs tracking-widest uppercase transition-all bg-black/40"
+      >
+        ← Portal
+      </Link>
+
+      <div className="relative z-10 w-full max-w-3xl flex flex-col items-center gap-6 md:gap-8">
+        
+        {/* Başlık Alanı - Daha Kompakt */}
+        <div className="flex flex-col items-center gap-1 md:gap-2 text-center">
+          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">Theia Kabilesi Arşivi</p>
+          <h1 className="text-white text-2xl md:text-4xl tracking-widest uppercase font-thin">Kadim Kayıtlar</h1>
+          <div className="w-16 h-px bg-white/20 mt-1" />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:gap-6 w-full">
-          {bolumler.map((b) => (
-            <Link
-              key={b.href}
-              href={b.href}
-              className={`group border p-6 md:p-8 flex flex-col md:flex-row items-center text-center md:text-left gap-4 md:gap-8 transition-all ${
-                b.href === '/kozmogenez' 
-                ? 'border-fuchsia-500/30 bg-fuchsia-500/5 shadow-[0_0_20px_rgba(168,85,247,0.1)] hover:border-fuchsia-500/60 hover:bg-fuchsia-500/10' 
-                : 'border-white/10 bg-black/40 hover:border-white/30 hover:bg-black/60'
-              }`}
-            >
-              <span className={`text-4xl md:text-5xl transition-all ${
-                b.href === '/kozmogenez' ? 'text-fuchsia-400/40 group-hover:text-fuchsia-400' : 'text-white/20 group-hover:text-white/40'
-              }`}>
-                {b.sembol}
-              </span>
-              <div className="flex flex-col gap-2">
-                <h2 className={`text-lg tracking-widest uppercase ${
-                  b.href === '/kozmogenez' ? 'text-fuchsia-300' : 'text-white'
-                }`}>{b.baslik}</h2>
-                <p className="text-white/40 text-sm tracking-wider">{b.aciklama}</p>
-              </div>
-              <span className={`hidden md:block ml-auto text-2xl transition-all ${
-                b.href === '/kozmogenez' ? 'text-fuchsia-400/20 group-hover:text-fuchsia-400' : 'text-white/20 group-hover:text-white/50'
-              }`}>→</span>
-            </Link>
-          ))}
+        {/* 2 Sütunlu Dengeli Grid - Mobilde ve Masaüstünde Sığan Düzen */}
+        <div className="grid grid-cols-2 gap-3 md:gap-4 w-full">
+          {bolumler.map((b) => {
+            const isKozmo = b.href === '/kozmogenez';
+            return (
+              <Link
+                key={b.href}
+                href={b.href}
+                className={`group border p-3 md:p-5 flex flex-col justify-center items-center text-center gap-1.5 md:gap-2 rounded-md transition-all relative overflow-hidden ${
+                  isKozmo 
+                  ? 'col-span-2 border-fuchsia-500/30 bg-fuchsia-500/5 shadow-[0_0_15px_rgba(168,85,247,0.08)] hover:border-fuchsia-500/60 hover:bg-fuchsia-500/10' 
+                  : 'border-white/5 bg-black/50 hover:border-white/20 hover:bg-black/70'
+                }`}
+              >
+                {/* Sembol */}
+                <span className={`text-2xl md:text-4xl transition-all duration-300 group-hover:scale-110 ${
+                  isKozmo ? 'text-fuchsia-400/50 group-hover:text-fuchsia-400' : 'text-white/20 group-hover:text-white/40'
+                }`}>
+                  {b.sembol}
+                </span>
+
+                {/* Metin Alanı */}
+                <div className="flex flex-col gap-0.5 md:gap-1">
+                  <h2 className={`text-xs md:text-sm tracking-widest uppercase font-medium ${
+                    isKozmo ? 'text-fuchsia-300' : 'text-white/80'
+                  }`}>
+                    {b.baslik}
+                  </h2>
+                  <p className="text-white/30 text-[9px] md:text-xs tracking-wide max-w-md line-clamp-2 leading-relaxed">
+                    {b.aciklama}
+                  </p>
+                </div>
+              </Link>
+            )
+          })}
         </div>
 
-        <Link
-          href="/portal"
-          className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all mt-4"
-        >
-          ← Portal'a Dön
-        </Link>
       </div>
     </main>
   )

@@ -280,8 +280,8 @@ leafletRef.current = map
                 + Yeni Nokta
               </button>
             )}
-            <Link href="/arsiv" className="text-white/20 text-xs tracking-widest uppercase hover:text-white/50 transition-all">
-              ← Arşiv
+            <Link href="/portal" className="border border-white/10 text-white/30 px-4 py-2 text-xs tracking-widest uppercase hover:border-white/30 hover:text-white/60 transition-all">
+              ← Portal
             </Link>
           </div>
         </div>
