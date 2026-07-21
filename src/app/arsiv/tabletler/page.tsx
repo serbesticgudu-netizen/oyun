@@ -168,8 +168,8 @@ export default function Tabletler() {
         
         {/* Başlık Alanı */}
         <div className="flex flex-col items-center gap-1 text-center shrink-0">
-          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">Theia Kabilesi</p>
-          <h1 className="text-white text-xl md:text-3xl tracking-widest uppercase">Kadim Tabletler</h1>
+          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">Theia KABİLESİ</p>
+          <h1 className="text-white text-xl md:text-3xl tracking-widest uppercase">KADİM Tabletler</h1>
           <div className="w-16 h-px bg-white/20 mt-1" />
         </div>
 
@@ -180,7 +180,7 @@ export default function Tabletler() {
               key={konu}
               onClick={() => konuSec(konu)}
               className={`
-                border py-2.5 md:py-3.5 text-[9px] md:text-xs tracking-widest uppercase transition-all duration-300 cursor-pointer text-center truncate
+                border py-2.5 md:py-3.5 text-[9px] md:text-xs tracking-widest transition-all duration-300 cursor-pointer text-center truncate
                 ${konuRenkleri[konu]}
 ${aktifKonu === konu ? `shadow-[0_0_15px_currentcolor] border-opacity-100 bg-opacity-20 scale-[1.02]` : 'opacity-50 hover:opacity-100 hover:scale-[1.02]'}
               `}
@@ -194,7 +194,7 @@ ${aktifKonu === konu ? `shadow-[0_0_15px_currentcolor] border-opacity-100 bg-opa
         {editingTablet && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm" onClick={() => setEditingTablet(null)}>
             <div className="w-full max-w-lg bg-black border border-fuchsia-500/30 p-5 flex flex-col gap-4 max-h-[90vh] overflow-y-auto rounded shadow-2xl shadow-fuchsia-500/10" onClick={e => e.stopPropagation()}>
-              <h2 className="text-white text-sm tracking-widest uppercase">{editingTablet.id ? 'Tableti Düzenle' : 'Yeni Tablet Ekle'}</h2>
+              <h2 className="text-white text-sm tracking-widest">{editingTablet.id ? 'Tableti Düzenle' : 'Yeni Tablet Ekle'}</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input value={editingTablet.baslik || ''} onChange={e => setEditingTablet({ ...editingTablet, baslik: e.target.value })} placeholder="Başlık" className="bg-black/30 border border-white/20 p-2 text-white text-xs" />
                 <input type="number" value={editingTablet.sira || 0} onChange={e => setEditingTablet({ ...editingTablet, sira: parseInt(e.target.value) || 0 })} placeholder="Sıra" className="bg-black/30 border border-white/20 p-2 text-white text-xs" />

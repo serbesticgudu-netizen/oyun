@@ -183,8 +183,8 @@ export default function Duyurular() {
 
         {/* Başlık */}
         <div className="flex flex-col items-center gap-1 text-center shrink-0">
-          <p className="text-fuchsia-400/40 text-[9px] md:text-xs tracking-[0.4em] uppercase">Tiyatro Theia</p>
-          <h1 className="text-white text-xl md:text-3xl tracking-widest uppercase">Kabilenin Sesi</h1>
+          <p className="text-fuchsia-400/40 text-[9px] md:text-xs tracking-[0.4em] uppercase">TİYATRO THEİA</p>
+          <h1 className="text-white text-xl md:text-3xl tracking-widest uppercase">KABİLENİN SESİ</h1>
           <div className="w-16 h-px bg-gradient-to-r from-transparent via-fuchsia-500/40 to-transparent mt-1" />
         </div>
 
@@ -200,7 +200,7 @@ export default function Duyurular() {
             <button
               key={tur}
               onClick={() => setFiltre(tur)}
-              className={`text-[9px] md:text-xs tracking-widest uppercase px-3 py-1.5 border transition-all ${filtre === tur ? `${stil.renk} bg-white/5` : 'border-white/10 text-white/40 hover:border-white/30'}`}
+              className={`text-[9px] md:text-xs tracking-widest px-3 py-1.5 border transition-all ${filtre === tur ? `${stil.renk} bg-white/5` : 'border-white/10 text-white/40 hover:border-white/30'}`}
             >
               {stil.ikon} {stil.etiket}
             </button>

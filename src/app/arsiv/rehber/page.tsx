@@ -173,7 +173,7 @@ export default function Rehber() {
 
         {/* Başlık Alanı - Daha Kompakt */}
         <div className="flex flex-col items-center gap-1 text-center shrink-0">
-          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">Tiyatro Theia</p>
+          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">Tİyatro Theia</p>
           <h1 className="text-white text-xl md:text-3xl tracking-widest uppercase font-thin">Theia'nın Oyunu</h1>
           <div className="w-16 h-px bg-white/20 mt-1" />
         </div>
@@ -219,8 +219,19 @@ export default function Rehber() {
                     style={{ background: `radial-gradient(ellipse at center, ${renk}20 0%, transparent 70%)` }}
                   />
                   <h2
-                    className="relative z-10 text-black font-bold tracking-widest uppercase text-xs md:text-sm lg:text-base transition-all"
-                    style={{ textShadow: `0 0 8px ${renk}` }}
+                    className="relative z-10 font-bold tracking-widest uppercase text-xs md:text-sm lg:text-base transition-all"
+  style={{
+    color: '#ffffff', // Yazı rengi bembeyaz
+    // CSS gölge katmanlama sırasıyla: Önce keskin siyah kontür, sonra arkasındaki pembe parıltı
+    textShadow: `
+      -1.5px -1.5px 0 #000,  
+       1.5px -1.5px 0 #000,  
+      -1.5px  1.5px 0 #000,  
+       1.5px  1.5px 0 #000,  
+       0px    0px   8px #e879f9,  
+       0px    0px  16px #e879f9
+    `
+  }}
                   >
                     {bolum.baslik}
                   </h2>
@@ -255,7 +266,7 @@ export default function Rehber() {
                   className="relative z-10 text-white font-medium tracking-widest uppercase text-xs md:text-sm transition-all"
                   style={{ textShadow: `0 0 8px ${borderRenkler[10]}` }}
                 >
-                  {sonBolum.baslik} <span className="text-white/30 text-[10px] lowercase tracking-normal italic hidden sm:inline">— incelemek için dokun</span>
+                  {sonBolum.baslik} 
                 </h2>
                 {profil?.is_admin && (
                   <span onClick={(e) => handleEdit(e, sonBolum)}

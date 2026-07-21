@@ -57,8 +57,8 @@ export default function Arsiv() {
         
         {/* Başlık Alanı - Daha Kompakt */}
         <div className="flex flex-col items-center gap-1 md:gap-2 text-center">
-          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">Theia Kabilesi Arşivi</p>
-          <h1 className="text-white text-2xl md:text-4xl tracking-widest uppercase font-thin">Kadim Kayıtlar</h1>
+          <p className="text-white/30 text-[9px] md:text-xs tracking-[0.4em] uppercase">TİYATRO THEIA ARŞİVİ</p>
+          <h1 className="text-white text-2xl md:text-4xl tracking-widest uppercase font-thin">KADİM KAYITLAR</h1>
           <div className="w-16 h-px bg-white/20 mt-1" />
         </div>
 
@@ -85,7 +85,7 @@ export default function Arsiv() {
 
                 {/* Metin Alanı */}
                 <div className="flex flex-col gap-0.5 md:gap-1">
-                  <h2 className={`text-xs md:text-sm tracking-widest uppercase font-medium ${
+                  <h2 className={`text-xs md:text-sm tracking-widest font-medium ${
                     isKozmo ? 'text-fuchsia-300' : 'text-white/80'
                   }`}>
                     {b.baslik}
