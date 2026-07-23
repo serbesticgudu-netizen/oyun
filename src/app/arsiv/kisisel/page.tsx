@@ -7,6 +7,13 @@ import { OrbitControls, Stage } from '@react-three/drei'
 import Link from 'next/link'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useGLTF } from '@react-three/drei'
+
+// Gelen .glb dosyasını Three.js belleğine yükleyip ekrana basan yardımcı bileşen
+function ModelOlusturucu({ url }: { url: string }) {
+  const { scene } = useGLTF(url)
+  return <primitive object={scene} />
+}
 
 type ArsivKaydi = {
   id: string
@@ -45,8 +52,8 @@ type Bag = {
   alici_id: string
   bag_tipi: 'muttefik' | 'ikiz_ruh' | 'koruyucu' | 'es' | 'dusman'
   durum: 'beklemede' | 'onaylandi' | 'reddedildi'
-  diger_karakter_adi?: string      // Yeni: Bağ kurulan kişinin adı
-  diger_gorsel_url?: string | null // Yeni: Bağ kurulan kişinin resmi
+  diger_karakter_adi?: string      
+  diger_gorsel_url?: string | null 
 }
 
 type EnvanterItem = {
@@ -57,6 +64,7 @@ type EnvanterItem = {
   gorsel_url?: string | null
   is3D: boolean
   modelType?: 'mask' | 'ring' | 'scroll'
+  model_url?: string | null // Veritabanındaki .glb dosya yolunu tutar
 }
 
 const tipStil: Record<string, { renk: string; ikon: string; etiket: string }> = {
@@ -70,9 +78,26 @@ const tipStil: Record<string, { renk: string; ikon: string; etiket: string }> = 
 const bagStilleri: Record<string, string> = {
   muttefik: 'text-cyan-400 border-cyan-400/20',
   ikiz_ruh: 'text-fuchsia-400 border-fuchsia-400/20',
-  koruyucu: 'text-rose-400 border-rose-400/20', // Muhafız yerine Koruyucu
-  es: 'text-amber-400 border-amber-400/20',             // Yeni: Eş
-  dusman: 'text-red-500 border-red-500/20',             // Yeni: Düşman
+  koruyucu: 'text-rose-400 border-rose-400/20', 
+  es: 'text-amber-400 border-amber-400/20',             
+  dusman: 'text-red-500 border-red-500/20',             
+}
+
+const MarkdownComponents = {
+  p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-xs md:text-sm" {...props} />,
+  strong: ({ ...props }) => <strong className="text-white font-bold tracking-wide" {...props} />,
+  em: ({ ...props }) => <em className="italic text-white/90" {...props} />,
+  ul: ({ ...props }) => <ul className="list-disc list-inside mb-3 space-y-1 ml-1 text-xs md:text-sm" {...props} />,
+  li: ({ ...props }) => <li className="text-white/70" {...props} />,
+  a: ({ ...props }) => (
+    <a 
+      className="text-fuchsia-400 hover:text-fuchsia-300 underline underline-offset-4 transition-colors" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props} 
+    />
+  ),
+  h3: ({ ...props }) => <h3 className="text-sm md:text-base text-white mt-4 mb-1.5 tracking-widest uppercase" {...props} />,
 }
 
 type Tab = 'sandik' | 'gorevler' | 'baglar' | 'hafiza'
@@ -90,16 +115,15 @@ export default function KisiselArsiv() {
   const [profil, setProfil] = useState<Profil | null>(null)
   const [filtre, setFiltre] = useState<string | null>(null)
   const [aktifKabileUyeleri, setAktifKabileUyeleri] = useState<{ kullanici_id: string; karakter_adi: string }[]>([])
+  const [envanterEsyalari, setEnvanterEsyalari] = useState<EnvanterItem[]>([])
   
-  // Yeni eklenen durumlar
+  // Bağ Durumları
   const [baglar, setBaglar] = useState<Bag[]>([])
   const [hedefKarakterAdi, setYeniKarakterAdi] = useState('')
   const [yeniBagTipi, setYeniBagTipi] = useState<'muttefik' | 'ikiz_ruh' | 'koruyucu' | 'es' | 'dusman'>('muttefik')
   const [bagGonderiliyor, setBagGonderiyor] = useState(false)
   
-  // Açılır-Kapanır Görev Detay ID'si
   const [acikGorevId, setAcikGorevId] = useState<string | null>(null)
-
   const [seciliEsya, setSeciliEsya] = useState<EnvanterItem | null>(null)
   const [takiliMaske, setTakiliMaske] = useState<EnvanterItem | null>(null)
   const [takiliDekor, setTakiliDekor] = useState<EnvanterItem | null>(null)
@@ -108,7 +132,7 @@ export default function KisiselArsiv() {
   const supabase = createClient()
 
   useEffect(() => {
-async function yukle() {
+    async function yukle() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/giris'; return }
 
@@ -120,7 +144,7 @@ async function yukle() {
       const { data: arsivData } = await supabase.from('kisisel_arsiv').select('*').eq('kullanici_id', user.id).order('created_at', { ascending: false })
       setKayitlar(arsivData ?? [])
 
-      // 3. MÜHÜRLÜ BAĞLARI VE DİĞER ÜYELERİN BİLGİLERİNİ ÇEK (Eşleme Bölümü)
+      // 3. MÜHÜRLÜ BAĞLARI VE DİĞER ÜYELERİN BİLGİLERİNİ ÇEK
       const { data: baglarData } = await supabase
         .from('karakter_baglari')
         .select('*')
@@ -144,12 +168,47 @@ async function yukle() {
         setBaglar(zenginlestirilmisBaglar as Bag[])
       }
 
-      // 4. BAĞ KURMA LİSTESİ İÇİN AKTİF ÜYELERİ ÇEK (Kendi ID'mizi gizleyerek)
+      // YENİ SORGULAMA ( Left Join )
+      const { data: envData, error: envHata } = await supabase
+        .from('karakter_envanteri')
+        .select('id, takili_mi, urun_id, magaza_urunleri(id, isim, aciklama, esya_tipi, gorsel_url, model_url)')
+        .eq('kullanici_id', user.id)
+
+      if (envHata) {
+        console.error("Envanter çekilirken hata oluştu:", JSON.stringify(envHata))
+      }
+
+      if (envData) {
+        const formatliEsyalar: EnvanterItem[] = envData
+          .filter((e: any) => e.magaza_urunleri !== null)
+          .map((e: any) => ({
+            id: e.id, 
+            isim: e.magaza_urunleri.isim,
+            tip: e.magaza_urunleri.esya_tipi, 
+            aciklama: e.magaza_urunleri.aciklama,
+            gorsel_url: e.magaza_urunleri.gorsel_url,
+            is3D: !!e.magaza_urunleri.model_url, 
+            modelType: e.magaza_urunleri.esya_tipi === 'maske' ? 'mask' : 'ring',
+            model_url: e.magaza_urunleri.model_url // DÜZELTİLDİ: Eksik model_url bağlantısı eklendi!
+          }))
+        
+        setEnvanterEsyalari(formatliEsyalar)
+
+        const takiliMaskeObj = formatliEsyalar.find(item => item.tip === 'maske' && envData.find((e: any) => e.id === item.id)?.takili_mi)
+        const takiliDekorObj = formatliEsyalar.find(item => item.tip === 'dekor' && envData.find((e: any) => e.id === item.id)?.takili_mi)
+        const takiliAksesuarObj = formatliEsyalar.find(item => item.tip === 'aksesuar' && envData.find((e: any) => e.id === item.id)?.takili_mi)
+
+        if (takiliMaskeObj) setTakiliMaske(takiliMaskeObj)
+        if (takiliDekorObj) setTakiliDekor(takiliDekorObj)
+        if (takiliAksesuarObj) setTakiliAksesuar(takiliAksesuarObj)
+      }
+
+      // 4. BAĞ KURMA LİSTESİ İÇİN AKTİF ÜYELERİ ÇEK
       const { data: uyeler } = await supabase
         .from('karakterler')
         .select('kullanici_id, karakter_adi')
         .eq('durum', 'tamamlandi')
-        .neq('kullanici_id', user.id) // Kendi ID'mizi listeden eler
+        .neq('kullanici_id', user.id) 
       setAktifKabileUyeleri(uyeler ?? [])
 
       // 5. Görevleri çek
@@ -168,12 +227,10 @@ async function yukle() {
     yukle()
   }, [])
 
-  // Yeni Kozmik Bağ Talebi Gönderme
   async function bagTalebiGonder() {
     if (!hedefKarakterAdi.trim() || !profil || bagGonderiliyor) return
     setBagGonderiyor(true)
 
-    // Karakter adına göre karşı kullanıcının ID'sini veritabanından sorgula
     const { data: hedefKarakter, error: kHata } = await supabase
       .from('karakterler')
       .select('kullanici_id, karakter_adi')
@@ -186,14 +243,12 @@ async function yukle() {
       return
     }
 
-    // Kendine bağ kurma engeli
     if (hedefKarakter.kullanici_id === profil.id) {
       alert("Kozmik kurallar gereği kendi varlığınızla bağ kuramazsınız.")
       setBagGonderiyor(false)
       return
     }
 
-    // Bağ talebini veritabanına ekle
     const { data, error } = await supabase.from('karakter_baglari').insert({
       gonderen_id: profil.id,
       alici_id: hedefKarakter.kullanici_id,
@@ -218,22 +273,15 @@ async function yukle() {
     else if (data) setBaglar(prev => prev.map(b => b.id === bagId ? { ...b, durum: yeniDurum } : b))
   }
 
-  const sahipOlunanEsyalar: EnvanterItem[] = [
-    { id: '1', isim: 'Kutsal Thera Maskesi', tip: 'maske', aciklama: 'Santorini patlamasından kalan kadim küllerle sıvanmış altın maske. Karakterinizin aurasını gizler.', is3D: true, modelType: 'mask' },
-    { id: '2', isim: 'Katip Usturlabı', tip: 'aksesuar', aciklama: 'Yıldızların ve geçitlerin konumunu saniyelerle ölçen pirinç gök ölçer.', is3D: true, modelType: 'ring' },
-    { id: '3', isim: 'Efes Geçit Fermuarı', tip: 'dekor', aciklama: 'Portal sayfanızın arka planını Efes Artemis Tapınağı’nın antik kalıntılarıyla kaplar.', is3D: false, gorsel_url: '/theia-bg.jpg' }
-  ]
-
-  // YENİ DÜZELTME: Yıldız Tozu envanter kutularından temizlendi
   const envanterSlotlari = useMemo(() => {
     const slots: EnvanterSlot[] = Array.from({ length: 12 }).map(() => ({ type: 'empty', data: null }))
-    sahipOlunanEsyalar.forEach((item, index) => {
+    envanterEsyalari.forEach((item, index) => {
       if (index < 12) {
         slots[index] = { type: 'item', data: item }
       }
     })
     return slots
-  }, [profil])
+  }, [envanterEsyalari])
 
   const filtrelenmis = filtre ? kayitlar.filter(k => k.tip === filtre) : kayitlar
   const gruplar: Record<string, ArsivKaydi[]> = {}
@@ -265,7 +313,7 @@ async function yukle() {
           <div className="w-16 h-px bg-white/20 mt-1" />
         </div>
 
-        {/* YENİ ÖZEL YILDIZ TOZU GÖSTERGESİ (Altın Sarısı ve Parlayan Rün) */}
+        {/* YILDIZ TOZU GÖSTERGESİ */}
         <div className="flex items-center justify-center gap-2 text-center shrink-0">
           <span className="text-amber-400 text-base animate-pulse shadow-[0_0_10px_#f59e0b]">𐀏</span>
           <span className="text-white/40 text-[9px] uppercase tracking-widest">Yıldız Tozu Rezervi:</span>
@@ -274,12 +322,12 @@ async function yukle() {
           </span>
         </div>
 
-        {/* SEKMELER — Sığdırılmış 4'lü Izgara (Yatay Scroll Yok) */}
+        {/* SEKMELER */}
         <div className="grid grid-cols-4 gap-1 w-full shrink-0 border-b border-white/5 pb-2">
           {([
             { key: 'sandik', label: 'Sandık', renk: 'text-fuchsia-400 border-fuchsia-500' },
             { key: 'gorevler', label: 'Görevler', renk: 'text-cyan-400 border-cyan-500' },
-            { key: 'baglar', label: 'Bağlar', renk: 'text-violet-400 border-violet-500' },
+            { key: 'baglar', label: 'Baglar', renk: 'text-violet-400 border-violet-500' },
             { key: 'hafiza', label: 'Hafıza', renk: 'text-rose-400 border-rose-500' }
           ] as const).map(tab => (
             <button
@@ -333,7 +381,7 @@ async function yukle() {
                     </div>
                   </div>
 
-                  {/* 12'li Envanter Grid'i (Temizlendi, Yıldız Tozu buraya gelmez) */}
+                  {/* 12'li Envanter Grid'i */}
                   <div className="md:col-span-2 flex flex-col gap-3">
                     <span className="text-white/30 text-[9px] tracking-widest uppercase">Mistik Sandık</span>
                     <div className="grid grid-cols-4 gap-2.5">
@@ -359,10 +407,9 @@ async function yukle() {
                 </div>
               )}
 
-              {/* 2. SEKME: GÖREV GÜNLÜĞÜ (Açılır Kapanır Accordion Yapısı) */}
+              {/* 2. SEKME: GÖREV GÜNLÜĞÜ */}
               {aktifTab === 'gorevler' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8 animate-fade-in">
-                  {/* Aktif Görevler */}
                   <div className="flex flex-col gap-2">
                     <span className="text-cyan-400/40 text-[10px] tracking-widest uppercase">Aktif Görevler</span>
                     {aktifGorevler.length > 0 ? (
@@ -380,11 +427,9 @@ async function yukle() {
                               </div>
                               <span className="text-white/20 text-xs">{isOpen ? '▲' : '▼'}</span>
                             </div>
-                            
-                            {/* Görev Detay Açılır Alanı */}
                             {isOpen && (
                               <div className="p-4 border-t border-white/5 bg-black/40 text-[11px] text-white/50 leading-relaxed max-h-40 overflow-y-auto no-scrollbar">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                                   {g.mitolojik_gecmis || 'Bu göreve dair antik bir kalıntı kaydı bulunmuyor.'}
                                 </ReactMarkdown>
                               </div>
@@ -397,7 +442,6 @@ async function yukle() {
                     )}
                   </div>
 
-                  {/* Tamamlanmış Görevler */}
                   <div className="flex flex-col gap-2">
                     <span className="text-emerald-400/40 text-[10px] tracking-widest uppercase">Tamamlanmış Görevler</span>
                     {tamamlananGorevler.length > 0 ? (
@@ -415,12 +459,11 @@ async function yukle() {
                               </div>
                               <span className="text-white/20 text-xs">{isOpen ? '▲' : '▼'}</span>
                             </div>
-                            
                             {isOpen && (
                               <div className="p-4 border-t border-white/5 bg-black/40 text-[11px] text-white/50 leading-relaxed max-h-40 overflow-y-auto no-scrollbar">
-<ReactMarkdown remarkPlugins={[remarkGfm]}>
-  {g.mitolojik_gecmis || 'Bu göreve dair antik bir kalıntı kaydı bulunmuyor.'}
-</ReactMarkdown>
+                                <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
+                                  {g.mitolojik_gecmis || 'Bu göreve dair antik bir kalıntı kaydı bulunmuyor.'}
+                                </ReactMarkdown>
                               </div>
                             )}
                           </div>
@@ -433,11 +476,9 @@ async function yukle() {
                 </div>
               )}
 
-{/* 3. SEKME: KOZMİK BAĞLAR */}
+              {/* 3. SEKME: KOZMİK BAĞLAR */}
               {aktifTab === 'baglar' && (
                 <div className="flex flex-col gap-5 pb-8 animate-fade-in">
-                  
-                  {/* Bağ Kurma Formu aynı kalıyor... */}
                   <div className="border border-violet-500/15 bg-violet-500/5 p-4 rounded-md flex flex-col gap-3">
                     <span className="text-violet-400/50 text-[9px] tracking-widest uppercase">Mistik Bağ Ayini Başlat</span>
                     <div className="flex flex-col md:flex-row gap-2">
@@ -479,7 +520,6 @@ async function yukle() {
                   <span className="text-violet-400/40 text-[9px] tracking-widest uppercase">Mühürlenmiş Bağların</span>
                   {baglar.length === 0 && <p className="border border-dashed border-white/5 p-8 rounded text-center text-white/20 text-xs">Henüz kurulmuş bir kozmik bağ yok.</p>}
                   
-                  {/* YENİ GÖRSEL VE BELİRGİN BAĞ KARTLARI */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {baglar.map(bag => {
                       const benimleMiKuruldu = bag.alici_id === profil?.id
@@ -487,7 +527,6 @@ async function yukle() {
                       const stil = bagStilleri[bag.bag_tipi]
                       const digerIsim = bag.diger_karakter_adi ?? "Kabile Dostu"
                       
-                      // Okunabilir görkemli bağ isimleri
                       const bagUnvanlari: Record<string, string> = {
                         muttefik: "✦ MÜTTEFİK BAĞI ✦",
                         es: "💍 KUTSAL EŞ BAĞI 💍",
@@ -503,7 +542,6 @@ async function yukle() {
                           style={{ boxShadow: durum === 'onaylandi' ? `inset 0 0 15px rgba(255,255,255,0.02)` : 'none' }}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            {/* DİĞER KARAKTERİN GÖRSELİ */}
                             <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-black/20 shrink-0">
                               {bag.diger_gorsel_url ? (
                                 <img src={bag.diger_gorsel_url} alt={digerIsim} className="w-full h-full object-cover object-top" />
@@ -514,7 +552,6 @@ async function yukle() {
                               )}
                             </div>
 
-                            {/* İsim ve Parlayan Bağ Türü */}
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <span className="text-white text-xs md:text-sm font-bold truncate">
                                 {digerIsim}
@@ -583,7 +620,7 @@ async function yukle() {
           )}
         </div>
 
-        {/* 3D / 2D DETAY OKUMA VE KUŞANMA MODALI */}
+        {/* 3D / 2D DETAY OKUMA VE KUŞANMA MODAL */}
         {seciliEsya && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSeciliEsya(null)}>
             <div className="relative z-10 w-full max-w-xl bg-black border border-fuchsia-500/20 p-6 flex flex-col gap-5 rounded shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -599,16 +636,14 @@ async function yukle() {
                     <pointLight position={[5, 5, 5]} intensity={1.5} color="#e879f9" />
                     <Suspense fallback={null}>
                       <Stage environment="city" intensity={0.5}>
-                        {seciliEsya.modelType === 'mask' && (
-                          <mesh rotation={[0.2, 0.2, 0]}>
-                            <sphereGeometry args={[1, 32, 16]} />
-                            <meshStandardMaterial color="#f472b6" roughness={0.1} metalness={0.9} />
-                          </mesh>
-                        )}
-                        {seciliEsya.modelType === 'ring' && (
-                          <mesh rotation={[0.5, 0.5, 0]}>
-                            <torusGeometry args={[1, 0.3, 16, 100]} />
-                            <meshStandardMaterial color="#e5e7eb" roughness={0.2} metalness={0.8} />
+                        {/* Eğer veritabanından gelen model_url varsa, gerçek .glb dosyasını yükler. 
+                            Eğer yoksa, hata vermemesi için basit bir küre çizer. */}
+                        {seciliEsya.model_url ? (
+                          <ModelOlusturucu url={seciliEsya.model_url} />
+                        ) : (
+                          <mesh>
+                            <sphereGeometry args={[1, 16, 16]} />
+                            <meshStandardMaterial color="#ff2daf" />
                           </mesh>
                         )}
                       </Stage>
@@ -627,10 +662,22 @@ async function yukle() {
 
               <div className="flex gap-2 justify-end border-t border-white/10 pt-4">
                 <button 
-                  onClick={() => {
-                    if (seciliEsya.tip === 'maske') setTakiliMaske(seciliEsya)
-                    if (seciliEsya.tip === 'dekor') setTakiliDekor(seciliEsya)
-                    if (seciliEsya.tip === 'aksesuar') setTakiliAksesuar(seciliEsya)
+                  onClick={async () => {
+                    const supabase = createClient()
+                    
+                    const { error } = await supabase
+                      .from('karakter_envanteri')
+                      .update({ takili_mi: true })
+                      .eq('id', seciliEsya.id)
+
+                    if (error) {
+                      alert("Eşya kuşanılırken kozmik bir hata oluştu: " + error.message)
+                    } else {
+                      if (seciliEsya.tip === 'maske') setTakiliMaske(seciliEsya)
+                      if (seciliEsya.tip === 'dekor') setTakiliDekor(seciliEsya)
+                      if (seciliEsya.tip === 'aksesuar') setTakiliAksesuar(seciliEsya)
+                      alert(`✦ ${seciliEsya.isim} başarıyla kuşanıldı ve sahneye işlendi!`)
+                    }
                     setSeciliEsya(null)
                   }}
                   className="border border-fuchsia-500/50 text-fuchsia-300 px-6 py-2 text-xs tracking-widest uppercase hover:bg-fuchsia-500/10"
