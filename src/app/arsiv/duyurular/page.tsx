@@ -348,11 +348,11 @@ export default function Duyurular() {
 
                 <div className="p-6 md:p-8 flex-1 overflow-y-auto no-scrollbar flex flex-col gap-4">
                   {seciliDuyuru.gorsel_url && (
-                    <img
-                      src={seciliDuyuru.gorsel_url}
-                      alt={seciliDuyuru.baslik}
-                      className="w-full max-h-72 object-cover rounded border border-white/5"
-                    />
+<img
+  src={seciliDuyuru.gorsel_url}
+  alt={seciliDuyuru.baslik}
+  className="w-full aspect-video object-contain rounded border border-white/5 bg-black/40"
+/>
                   )}
                   <div className="w-full h-px bg-white/5" />
                   <p className="text-white/70 text-xs md:text-sm leading-relaxed tracking-wide">
