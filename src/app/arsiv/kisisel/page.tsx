@@ -121,10 +121,12 @@ export default function KisiselArsiv() {
       const { data: baglarData } = await supabase.from('karakter_baglari').select('*').or(`gonderen_id.eq.${user.id},alici_id.eq.${user.id}`)
       setBaglar(baglarData ?? [])
       // Sadece durumu onaylanmış (tamamlandi) olan aktif karakterleri listelemek için çekiyoruz
+// Yeni hali: (.neq filtresi ile kendi karakterimizi listeden gizliyoruz)
 const { data: uyeler } = await supabase
   .from('karakterler')
   .select('kullanici_id, karakter_adi')
   .eq('durum', 'tamamlandi')
+  .neq('kullanici_id', user.id) // Kendi ID'mize eşit olmayanları getirir
 setAktifKabileUyeleri(uyeler ?? [])
 
       const { data: siparisData } = await supabase.from('siparisler').select('*').eq('kullanici_id', user.id).order('created_at', { ascending: false })
