@@ -206,7 +206,7 @@ export default function OyunArkadaslari() {
                 </div>
                 <div className="md:col-span-2 flex flex-col gap-4">
                   <div><p className="text-white/30 text-xs tracking-widest uppercase">Tür</p><p className="text-white/70">{seciliKarakter.tur}</p></div>
-                  <div><p className="text-white/30 text-xs tracking-widest uppercase">Köken Hikayesi</p><p className="text-white/70 capitalize">{seciliKarakter.koken}</p></div>
+                  <div><p className="text-white/30 text-xs tracking-widest uppercase">Köken</p><p className="text-white/70 capitalize">{seciliKarakter.koken}</p></div>
                 </div>
               </div>
               
