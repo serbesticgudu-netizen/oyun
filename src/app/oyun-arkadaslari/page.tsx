@@ -205,7 +205,6 @@ export default function OyunArkadaslari() {
                   )}
                 </div>
                 <div className="md:col-span-2 flex flex-col gap-4">
-                  <div><p className="text-white/30 text-xs tracking-widest uppercase">Sahibi</p><p className="text-white/70">{getSahip(seciliKarakter.kullanici_id)?.email || 'Bilinmiyor'}</p></div>
                   <div><p className="text-white/30 text-xs tracking-widest uppercase">Tür / Köken</p><p className="text-white/70">{seciliKarakter.tur} / {seciliKarakter.koken}</p></div>
                   <div><p className="text-white/30 text-xs tracking-widest uppercase">Durum</p><p className="text-white/70 capitalize">{seciliKarakter.durum}</p></div>
                 </div>
