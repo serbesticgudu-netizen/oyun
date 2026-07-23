@@ -287,8 +287,10 @@ ${aktifKonu === konu ? `shadow-[0_0_15px_currentcolor] border-opacity-100 bg-opa
                     )}
                   </div>
                   <div className="w-full h-px bg-white/5" />
-                  <p className="text-white/50 text-xs md:text-sm leading-relaxed tracking-wide whitespace-pre-line">
+                  <p className="text-white/50 text-xs md:text-sm leading-relaxed tracking-wide">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
                     {tablet.icerik}
+                    </ReactMarkdown>
                   </p>
                 </div>
               ))}

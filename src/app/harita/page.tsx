@@ -599,7 +599,9 @@ leafletRef.current = map
 
                   <div className="flex-1 p-6 overflow-y-auto">
                     <p className="text-white/60 text-sm leading-relaxed tracking-wide">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
                       {tab === 'mitolojik' ? secili.mitolojik_gecmis : secili.fiziksel_gecmis}
+                      </ReactMarkdown>
                     </p>
                   </div>
 

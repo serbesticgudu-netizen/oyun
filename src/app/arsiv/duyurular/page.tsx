@@ -355,8 +355,10 @@ export default function Duyurular() {
                     />
                   )}
                   <div className="w-full h-px bg-white/5" />
-                  <p className="text-white/70 text-xs md:text-sm leading-relaxed tracking-wide whitespace-pre-line">
+                  <p className="text-white/70 text-xs md:text-sm leading-relaxed tracking-wide">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
                     {seciliDuyuru.icerik}
+          </ReactMarkdown>
                   </p>
                 </div>
               </div>
