@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type Profil = {
   id: string
@@ -35,6 +37,23 @@ const durumStilleri: Record<string, { renk: string; etiket: string; bg: string }
   beklemede: { renk: 'text-amber-400/70', etiket: 'Beklemede', bg: 'bg-amber-400' },
   hazirlaniyor: { renk: 'text-cyan-400/70', etiket: 'Hazırlanıyor', bg: 'bg-cyan-400' },
   tamamlandi: { renk: 'text-emerald-400/70', etiket: 'Hazır', bg: 'bg-emerald-400' },
+}
+
+const MarkdownComponents = {
+  p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-xs md:text-sm" {...props} />,
+  strong: ({ ...props }) => <strong className="text-white font-bold tracking-wide" {...props} />,
+  em: ({ ...props }) => <em className="italic text-white/90" {...props} />,
+  ul: ({ ...props }) => <ul className="list-disc list-inside mb-3 space-y-1 ml-1 text-xs md:text-sm" {...props} />,
+  li: ({ ...props }) => <li className="text-white/70" {...props} />,
+  a: ({ ...props }) => (
+    <a 
+      className="text-fuchsia-400 hover:text-fuchsia-300 underline underline-offset-4 transition-colors" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props} 
+    />
+  ),
+  h3: ({ ...props }) => <h3 className="text-sm md:text-base text-white mt-4 mb-1.5 tracking-widest uppercase" {...props} />,
 }
 
 export default function OyunArkadaslari() {

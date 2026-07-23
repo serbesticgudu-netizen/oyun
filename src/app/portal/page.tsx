@@ -4,12 +4,30 @@ import { ayFaziniHesapla, AyFazi } from '@/lib/ay'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type Profil = { rol: string; email: string; is_admin: boolean }
 type Karakter = {
   id: string; karakter_adi: string; tur: string; koken: string
   koken_hikayesi: string; gucler: string; zayifliklar: string
   motivasyon: string; durum: string; gorsel_url: string
+}
+const MarkdownComponents = {
+  p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-xs md:text-sm" {...props} />,
+  strong: ({ ...props }) => <strong className="text-white font-bold tracking-wide" {...props} />,
+  em: ({ ...props }) => <em className="italic text-white/90" {...props} />,
+  ul: ({ ...props }) => <ul className="list-disc list-inside mb-3 space-y-1 ml-1 text-xs md:text-sm" {...props} />,
+  li: ({ ...props }) => <li className="text-white/70" {...props} />,
+  a: ({ ...props }) => (
+    <a 
+      className="text-fuchsia-400 hover:text-fuchsia-300 underline underline-offset-4 transition-colors" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props} 
+    />
+  ),
+  h3: ({ ...props }) => <h3 className="text-sm md:text-base text-white mt-4 mb-1.5 tracking-widest uppercase" {...props} />,
 }
 
 export default function Portal() {
@@ -308,7 +326,7 @@ setOkunmamis(count ?? 0)
                 ))}
               </div>
 
-              {/* Tab içerik */}
+{/* Tab içerik — Markdown Destekli Yeni Sürüm */}
               <div className="flex-1 py-2 overflow-y-auto">
                 {aktifPanel === 'hikaye' && (
                   isEditing && editedKarakter ? (
@@ -319,7 +337,13 @@ setOkunmamis(count ?? 0)
                       placeholder="Köken hikayesi..."
                     />
                   ) : (
-                    karakter.koken_hikayesi && <p className="text-white/40 text-sm leading-relaxed max-w-2xl whitespace-pre-line">{karakter.koken_hikayesi}</p>
+                    karakter.koken_hikayesi && (
+                      <div className="text-white/40 text-sm leading-relaxed max-w-2xl">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                          {karakter.koken_hikayesi}
+                        </ReactMarkdown>
+                      </div>
+                    )
                   )
                 )}
                 {aktifPanel === 'gucler' && (
@@ -340,13 +364,21 @@ setOkunmamis(count ?? 0)
                         {karakter.gucler && (
                           <div>
                             <p className="text-cyan-400/30 text-xs tracking-[0.4em] uppercase mb-3">Güçler</p>
-                            <p className="text-white/40 text-xs leading-relaxed whitespace-pre-line">{karakter.gucler}</p>
+                            <div className="text-white/40 text-xs leading-relaxed">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                                {karakter.gucler}
+                              </ReactMarkdown>
+                            </div>
                           </div>
                         )}
                         {karakter.zayifliklar && (
                           <div>
                             <p className="text-rose-400/30 text-xs tracking-[0.4em] uppercase mb-3">Zayıflıklar</p>
-                            <p className="text-white/40 text-xs leading-relaxed whitespace-pre-line">{karakter.zayifliklar}</p>
+                            <div className="text-white/40 text-xs leading-relaxed">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                                {karakter.zayifliklar}
+                              </ReactMarkdown>
+                            </div>
                           </div>
                         )}
                       </>
@@ -357,7 +389,13 @@ setOkunmamis(count ?? 0)
                   isEditing && editedKarakter ? (
                     <textarea value={editedKarakter.motivasyon || ''} onChange={e => setEditedKarakter({ ...editedKarakter, motivasyon: e.target.value })} className="w-full max-w-2xl h-32 bg-black/30 border border-amber-500/30 p-3 text-white/60 text-sm leading-relaxed italic focus:outline-none focus:border-amber-500/60 transition-all" placeholder="Motivasyon..." />
                   ) : (
-                    karakter.motivasyon && <p className="text-white/40 text-sm leading-relaxed italic max-w-2xl whitespace-pre-line">{karakter.motivasyon}</p>
+                    karakter.motivasyon && (
+                      <div className="text-white/40 text-sm leading-relaxed italic max-w-2xl">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                          {karakter.motivasyon}
+                        </ReactMarkdown>
+                      </div>
+                    )
                   )
                 )}
               </div>

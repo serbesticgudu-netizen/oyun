@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const konuRenkleri: Record<string, string> = {
   'Kozmoloji': 'text-violet-400 border-violet-400/30 hover:border-violet-400 hover:bg-violet-400/10',
@@ -20,6 +22,23 @@ const konuGlow: Record<string, string> = {
   'Oyun Yasaları': 'shadow-rose-500/50',
   'Theia Tarihi': 'shadow-indigo-500/50',
   'Gaia Tarihi': 'shadow-emerald-500/50',
+}
+
+const MarkdownComponents = {
+  p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-xs md:text-sm" {...props} />,
+  strong: ({ ...props }) => <strong className="text-white font-bold tracking-wide" {...props} />,
+  em: ({ ...props }) => <em className="italic text-white/90" {...props} />,
+  ul: ({ ...props }) => <ul className="list-disc list-inside mb-3 space-y-1 ml-1 text-xs md:text-sm" {...props} />,
+  li: ({ ...props }) => <li className="text-white/70" {...props} />,
+  a: ({ ...props }) => (
+    <a 
+      className="text-fuchsia-400 hover:text-fuchsia-300 underline underline-offset-4 transition-colors" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props} 
+    />
+  ),
+  h3: ({ ...props }) => <h3 className="text-sm md:text-base text-white mt-4 mb-1.5 tracking-widest uppercase" {...props} />,
 }
 
 type Tablet = {

@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 type Nokta = {
   id: string
@@ -32,6 +34,23 @@ const tipStil: Record<string, { renk: string; glow: string; etiket: string; bg: 
   etkinlik: { renk: '#f0c040', glow: '0 0 14px rgba(240,192,64,0.7)',   etiket: 'ETKİNLİK',     bg: 'rgba(240,192,64,0.1)',  rgb: '240,192,64'  },
   tehlike:  { renk: '#ef4444', glow: '0 0 14px rgba(239,68,68,0.7)',    etiket: 'TEHLİKE',      bg: 'rgba(239,68,68,0.1)',   rgb: '239,68,68'   },
   kesfet:   { renk: '#34d399', glow: '0 0 14px rgba(52,211,153,0.7)',   etiket: 'KEŞFET', bg: 'rgba(52,211,153,0.1)', rgb: '52,211,153'  },
+}
+
+const MarkdownComponents = {
+  p: ({ ...props }) => <p className="mb-3 last:mb-0 leading-relaxed text-xs md:text-sm" {...props} />,
+  strong: ({ ...props }) => <strong className="text-white font-bold tracking-wide" {...props} />,
+  em: ({ ...props }) => <em className="italic text-white/90" {...props} />,
+  ul: ({ ...props }) => <ul className="list-disc list-inside mb-3 space-y-1 ml-1 text-xs md:text-sm" {...props} />,
+  li: ({ ...props }) => <li className="text-white/70" {...props} />,
+  a: ({ ...props }) => (
+    <a 
+      className="text-fuchsia-400 hover:text-fuchsia-300 underline underline-offset-4 transition-colors" 
+      target="_blank" 
+      rel="noopener noreferrer" 
+      {...props} 
+    />
+  ),
+  h3: ({ ...props }) => <h3 className="text-sm md:text-base text-white mt-4 mb-1.5 tracking-widest uppercase" {...props} />,
 }
 
 const durumEtiket = { aktif: 'AKTİF', uyku: 'UYKU', kapali: 'KAPALI' }
