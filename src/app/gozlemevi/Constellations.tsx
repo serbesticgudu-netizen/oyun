@@ -22,13 +22,16 @@ interface ZStar { pos: [number, number, number]; color?: string; size?: number }
 // GERÇEK ASTERİZMA HATLARINA YAKIN KOORDİNATLAR
 const zodiacStars: Record<string, { stars: ZStar[]; links: [number, number][] }> = {
   Koc: {
+    // Hamal - Sheratan - Mesarthim gerçek eğrisi
     stars: [
-      { pos: [2.4, 1.6, 0], color: '#fef3c7', size: 0.55 },
-      { pos: [0.6, 0.5, 0.1], size: 0.4 },
-      { pos: [-0.6, -0.2, 0.2], size: 0.35 },
+      { pos: [3.05, 3.41, 0], color: '#fef3c7', size: 0.55 }, // Hamal (α)
+      { pos: [-1.33, -0.57, 0.1], size: 0.4 },                // Sheratan (β)
+      { pos: [-1.72, -2.84, 0.15], size: 0.35 },              // Mesarthim (γ)
     ],
     links: [[0, 1], [1, 2]],
   },
+
+  // BOĞA AYNI KALIYOR — SEN VERMİŞTİN, DOKUNMADIM
   Boga: {
     stars: [
       { pos: [0, 0, 0], color: '#f97316', size: 0.9 },
@@ -46,108 +49,137 @@ const zodiacStars: Record<string, { stars: ZStar[]; links: [number, number][] }>
     ],
     links: [[5, 1], [1, 0], [0, 2], [2, 3], [1, 4]],
   },
+
   Ikizler: {
+    // Castor & Pollux başlar, Wasat/Alhena ve Mebsuta/Tejat ayaklara iner
     stars: [
-      { pos: [-1.5, 3.5, 0], color: '#e0f2fe', size: 0.5 },
-      { pos: [-1.7, 1.8, 0.1], size: 0.35 },
-      { pos: [-1.9, 0, 0], size: 0.35 },
-      { pos: [1.4, 3, 0], color: '#fef9c3', size: 0.5 },
-      { pos: [1.2, 1.4, 0.1], size: 0.35 },
-      { pos: [1, -0.2, 0], size: 0.35 },
+      { pos: [3.56, 3.88, 0], color: '#e0f2fe', size: 0.5 },   // Castor (α)
+      { pos: [4.81, 1.90, 0.1], color: '#fef9c3', size: 0.5 }, // Pollux (β)
+      { pos: [1.87, -1.20, 0], size: 0.35 },                   // Wasat (δ)
+      { pos: [-3.08, -4.06, 0], size: 0.35 },                  // Alhena (γ, Castor'un ayağı)
+      { pos: [-2.36, 0.41, 0.1], size: 0.35 },                 // Mebsuta (ε)
+      { pos: [-4.80, -0.93, 0], size: 0.35 },                  // Tejat (μ, Pollux'un ayağı)
     ],
-    links: [[0, 1], [1, 2], [3, 4], [4, 5], [0, 3]],
+    links: [[0, 1], [0, 2], [2, 3], [1, 4], [4, 5]],
   },
+
   Yengec: {
+    // Sönük ters-Y; ortada Beehive (M44) kümesi
     stars: [
-      { pos: [0, 2, 0], size: 0.35 },
-      { pos: [-1.6, -1.8, 0], size: 0.35 },
-      { pos: [1.6, -2.2, 0], size: 0.35 },
-      { pos: [0, 0.3, 0.2], size: 0.2, color: '#fef3c7' },
+      { pos: [4.30, -4.21, 0], size: 0.35 },                  // Acubens (α)
+      { pos: [-5.79, -6.88, 0], size: 0.35 },                 // Altarf (β)
+      { pos: [0.65, 5.40, 0.1], size: 0.35 },                 // Asellus Borealis (γ)
+      { pos: [0.98, 2.09, 0], size: 0.35 },                   // Asellus Australis (δ)
+      { pos: [-0.14, 3.60, 0.2], color: '#fef3c7', size: 0.2 }, // M44 (Beehive kümesi)
     ],
-    links: [[0, 3], [3, 1], [3, 2]],
+    links: [[2, 3], [3, 0], [3, 1]],
   },
+
   Aslan: {
+    // Sickle (orak) kancası + Zosma-Chertan-Denebola kuyruk üçgeni
     stars: [
-      { pos: [0, -2.2, 0], color: '#dbeafe', size: 0.6 },
-      { pos: [-0.6, -0.6, 0.1], size: 0.35 },
-      { pos: [-1.3, 0.9, 0], size: 0.35 },
-      { pos: [-0.7, 2.2, 0], size: 0.35 },
-      { pos: [0.4, 2.5, 0.1], size: 0.35 },
-      { pos: [3, -0.8, 0], size: 0.45 },
+      { pos: [-3.88, -1.82, 0], color: '#dbeafe', size: 0.6 }, // Regulus (α)
+      { pos: [-3.98, 0.10, 0], size: 0.35 },                   // Eta Leo
+      { pos: [-2.77, 1.33, 0.1], size: 0.35 },                 // Algieba (γ)
+      { pos: [2.42, 1.60, 0], size: 0.4 },                      // Zosma (δ)
+      { pos: [2.43, -0.43, 0], size: 0.35 },                    // Chertan (θ)
+      { pos: [5.77, -0.78, 0], size: 0.45 },                    // Denebola (β)
     ],
-    links: [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 3]],
   },
+
   Basak: {
+    // Y şekli — kollar Vindemiatrix ve Zavijava'dan Porrima'da birleşir, gövde Heze-Spica'ya iner
     stars: [
-      { pos: [0, -3, 0], color: '#bae6fd', size: 0.6 },
-      { pos: [0, -1, 0.1], size: 0.35 },
-      { pos: [-1.8, 0.8, 0], size: 0.35 },
-      { pos: [1.8, 1.2, 0], size: 0.35 },
+      { pos: [3.02, -4.66, 0], color: '#bae6fd', size: 0.6 },  // Spica (α)
+      { pos: [-6.43, 0.51, 0], size: 0.4 },                     // Zavijava (β)
+      { pos: [-1.34, -0.77, 0.1], size: 0.35 },                 // Porrima (γ, Y'nin birleşim noktası)
+      { pos: [0.06, 1.16, 0], size: 0.35 },                     // Auva (δ)
+      { pos: [0.72, 4.19, 0], size: 0.35 },                     // Vindemiatrix (ε)
+      { pos: [3.97, -0.43, 0.1], size: 0.35 },                  // Heze (ζ)
     ],
-    links: [[0, 1], [1, 2], [1, 3]],
+    links: [[4, 3], [3, 2], [1, 2], [2, 5], [5, 0]],
   },
+
   Terazi: {
+    // Uçurtma biçimli dörtgen (kefe hattı)
     stars: [
-      { pos: [-2, 1, 0], size: 0.4 },
-      { pos: [2, 1.2, 0], size: 0.4 },
-      { pos: [1.5, -1.5, 0], size: 0.35 },
-      { pos: [-1.5, -1.7, 0], size: 0.35 },
+      { pos: [-2.53, 0.18, 0], size: 0.4 },   // Zubenelgenubi (α)
+      { pos: [0.62, 3.49, 0], size: 0.4 },    // Zubeneschamali (β)
+      { pos: [2.84, 0.78, 0.1], size: 0.35 }, // Zubenelakrab (γ)
+      { pos: [-0.93, -4.46, 0], size: 0.35 }, // Brachium (σ)
     ],
     links: [[0, 1], [1, 2], [2, 3], [3, 0]],
   },
+
   Akrep: {
+    // Meşhur olta kancası — Antares kalpte, uçta Shaula/Lesath ("kedi gözleri") çifti
     stars: [
-      { pos: [-2, 3, 0], color: '#f87171', size: 0.65 },
-      { pos: [-1.5, 1.5, 0], size: 0.35 },
-      { pos: [-0.8, 0, 0], size: 0.35 },
-      { pos: [0, -1.5, 0], size: 0.35 },
-      { pos: [1, -2.3, -0.3], size: 0.35 },
-      { pos: [2, -2, -0.8], size: 0.4 },
+      { pos: [-6.40, 7.38, 0], size: 0.4 },                    // Graffias (β1)
+      { pos: [-7.26, 5.21, 0.1], size: 0.4 },                  // Dschubba (δ)
+      { pos: [-2.39, 2.28, 0], color: '#f87171', size: 0.65 }, // Antares (α, kalp)
+      { pos: [-1.30, 0.91, 0], size: 0.35 },                   // τ Sco
+      { pos: [1.09, -3.77, -0.1], size: 0.35 },                // ε Sco
+      { pos: [8.37, -5.93, -0.3], size: 0.4 },                 // Shaula (λ)
+      { pos: [7.89, -6.08, -0.3], size: 0.4 },                 // Lesath (υ)
     ],
-    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6]],
   },
+
   Yay: {
+    // "Çaydanlık" (Teapot) asterizması — çok bilinen 8 yıldızlı kapalı şekil
     stars: [
-      { pos: [-2, 1, 0], size: 0.35 },
-      { pos: [-1, 2, 0], size: 0.35 },
-      { pos: [1.5, 1.8, 0], size: 0.35 },
-      { pos: [-1.5, -1, 0], size: 0.35 },
-      { pos: [1, -1.2, 0], size: 0.35 },
-      { pos: [1.8, 0.5, 0], size: 0.35 },
+      { pos: [-3.52, -0.88, 0], size: 0.35 },  // Kaus Media (δ)
+      { pos: [-2.88, -5.02, 0], size: 0.35 },  // Kaus Australis (ε)
+      { pos: [-2.13, 3.13, 0.1], size: 0.35 }, // Kaus Borealis (λ)
+      { pos: [3.30, 2.33, 0], size: 0.35 },    // Nunki (σ)
+      { pos: [4.76, -0.93, 0], size: 0.35 },   // Ascella (ζ)
+      { pos: [1.39, 1.70, 0.1], size: 0.3 },   // Phi Sgr
+      { pos: [5.63, 1.08, 0], size: 0.3 },     // Tau Sgr
+      { pos: [-6.54, -1.42, 0], size: 0.4 },   // Alnasl (γ, gaga ucu)
     ],
-    links: [[0, 1], [1, 5], [5, 2], [5, 4], [4, 3], [3, 0]],
+    links: [[7, 0], [0, 2], [2, 5], [5, 3], [3, 6], [6, 4], [4, 1], [1, 0]],
   },
+
   Oglak: {
+    // Deniz-keçisi teknesi — Algedi/Dabih boynuz çifti, Nashira/Deneb Algedi kuyruk
     stars: [
-      { pos: [-3, 1, 0], size: 0.4 },
-      { pos: [-1.2, -1, 0], size: 0.3 },
-      { pos: [0, -2, 0], size: 0.35 },
-      { pos: [1.5, -1.2, 0], size: 0.3 },
-      { pos: [3, 1.2, 0], size: 0.4 },
+      { pos: [-8.92, 3.14, 0], size: 0.4 },   // Algedi (α2)
+      { pos: [-8.38, 1.42, 0.1], size: 0.4 }, // Dabih (β)
+      { pos: [6.20, -0.03, 0], size: 0.35 },  // Nashira (γ)
+      { pos: [7.48, 0.38, 0], size: 0.35 },   // Deneb Algedi (δ)
+      { pos: [3.72, -4.45, 0], size: 0.3 },   // ζ Cap
+      { pos: [-0.10, -0.46, 0.1], size: 0.3 },// θ Cap
     ],
-    links: [[0, 1], [1, 2], [2, 3], [3, 4]],
+    links: [[0, 1], [1, 5], [5, 4], [4, 2], [2, 3]],
   },
+
   Kova: {
+    // Su testisi (Y) + akan su hattı
     stars: [
-      { pos: [-1.5, 2.5, 0], size: 0.35 },
-      { pos: [1.2, 2.7, 0], size: 0.35 },
-      { pos: [0, 1, 0], size: 0.35 },
-      { pos: [0, -1.2, 0], size: 0.3 },
-      { pos: [0.6, -2.3, 0], size: 0.25 },
-      { pos: [1.1, -3.2, -0.2], size: 0.2 },
+      { pos: [-2.83, 3.09, 0], size: 0.35 },  // Sadalmelik (α)
+      { pos: [-8.15, -0.19, 0], size: 0.4 },  // Sadalsuud (β)
+      { pos: [-0.35, 2.42, 0.1], size: 0.3 }, // Sadachbia (γ)
+      { pos: [4.78, -6.60, 0], size: 0.25 },  // Skat (δ)
+      { pos: [0.77, 3.28, 0.1], size: 0.3 },  // ζ Aqr (testi ağzı)
+      { pos: [1.78, 3.21, 0], size: 0.3 },    // η Aqr (testi ağzı)
+      { pos: [3.99, -5.21, 0], size: 0.25 },  // τ Aqr (akan su)
     ],
-    links: [[0, 2], [1, 2], [2, 3], [3, 4], [4, 5]],
+    links: [[1, 0], [0, 4], [4, 5], [5, 6], [6, 3]],
   },
+
   Balik: {
+    // Circlet (batı balığı, beşgen) + kordon + doğu balığı
     stars: [
-      { pos: [-4, 1.2, 0], size: 0.35 },
-      { pos: [-3.4, 0.2, 0], size: 0.3 },
-      { pos: [-1, -1, 0], size: 0.25 },
-      { pos: [1, -0.4, 0], size: 0.25 },
-      { pos: [3.4, 1, 0], size: 0.3 },
-      { pos: [4, 2, 0], size: 0.35 },
+      { pos: [-4.36, -0.64, 0], size: 0.3 },  // γ Psc
+      { pos: [-3.46, 0.39, 0.1], size: 0.3 }, // θ Psc
+      { pos: [-2.47, 0.14, 0], size: 0.25 },  // ι Psc
+      { pos: [-2.27, -1.15, 0], size: 0.25 }, // λ Psc
+      { pos: [-3.55, -1.32, 0.1], size: 0.3 },// κ Psc (Circlet kapanışı)
+      { pos: [9.32, -0.81, 0], size: 0.4 },   // Alrescha (α, düğüm)
+      { pos: [6.79, 3.38, 0], size: 0.35 },   // η Psc (doğu balığı)
     ],
-    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]],
+    links: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [4, 5], [5, 6]],
   },
 }
 
@@ -263,10 +295,9 @@ export default function Constellations({
     groupRef.current.quaternion.slerp(targetQuat, 0.08)
   })
 
-  const globalOpacity = isDay ? 0 : 1;
-
-  return (
-    <group ref={groupRef} visible={!isDay}>
+const globalOpacity = 1; // Artık gündüz de tam görünür
+return (
+  <group ref={groupRef} visible={true}>
       {/* Arka Plan Yıldızları */}
       {stars.map((star, i) => (
         <mesh key={i} position={[star.x, star.y, star.z]}>

@@ -196,8 +196,7 @@ export default function Gozlemevi() {
 
           return (
             <Canvas camera={{ position: [0, 0, 0.1], fov: 60 }}>
-              <color attach="background" args={[isDay ? '#0c1b30' : '#010003']} />
-              {isDay && <fog attach="fog" args={['#0c1b30', 5, 20]} />}
+<color attach="background" args={['#010003']} />
 
               <Suspense fallback={null}>
                 {/* Güneş Modeli */}
@@ -240,13 +239,13 @@ export default function Gozlemevi() {
                 <directionalLight position={[0, -1, -5]} intensity={0.4} color={isDay ? '#f59e0b' : '#e879f9'} />
               </Suspense>
 
-              <OrbitControls
-                enableZoom={false}
-                enablePan={false}
-                reverseOrbit={true}
-                minPolarAngle={Math.PI / 2 + 0.05}
-                maxPolarAngle={Math.PI}
-              />
+<OrbitControls 
+  enableZoom={false} 
+  enablePan={false}
+  reverseOrbit={true}
+  minPolarAngle={Math.PI / 2 - 0.4}   // Eskiden +0.05 idi, artık ufkun biraz altını da gösteriyor
+  maxPolarAngle={Math.PI}
+/>
             </Canvas>
           )
         })()}
