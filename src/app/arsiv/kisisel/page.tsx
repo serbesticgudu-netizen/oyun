@@ -43,10 +43,10 @@ type Bag = {
   id: string
   gonderen_id: string
   alici_id: string
-  bag_tipi: 'muttefik' | 'ikiz_ruh' | 'muhafiz' | 'katip'
+  bag_tipi: 'muttefik' | 'ikiz_ruh' | 'koruyucu' | 'es' | 'dusman'
   durum: 'beklemede' | 'onaylandi' | 'reddedildi'
-  gonderen_email?: string
-  gonderen_karakter?: string
+  diger_karakter_adi?: string      // Yeni: Bağ kurulan kişinin adı
+  diger_gorsel_url?: string | null // Yeni: Bağ kurulan kişinin resmi
 }
 
 type EnvanterItem = {
@@ -108,30 +108,51 @@ export default function KisiselArsiv() {
   const supabase = createClient()
 
   useEffect(() => {
-    async function yukle() {
+async function yukle() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { window.location.href = '/giris'; return }
 
+      // 1. Profil ve Yıldız Tozu
       const { data: p } = await supabase.from('profiles').select('rol, yildiz_tozu, email, id').eq('id', user.id).single()
       setProfil(p as Profil)
 
+      // 2. Kişisel hafıza akışını çek
       const { data: arsivData } = await supabase.from('kisisel_arsiv').select('*').eq('kullanici_id', user.id).order('created_at', { ascending: false })
       setKayitlar(arsivData ?? [])
 
-      const { data: baglarData } = await supabase.from('karakter_baglari').select('*').or(`gonderen_id.eq.${user.id},alici_id.eq.${user.id}`)
-      setBaglar(baglarData ?? [])
-      // Sadece durumu onaylanmış (tamamlandi) olan aktif karakterleri listelemek için çekiyoruz
-// Yeni hali: (.neq filtresi ile kendi karakterimizi listeden gizliyoruz)
-const { data: uyeler } = await supabase
-  .from('karakterler')
-  .select('kullanici_id, karakter_adi')
-  .eq('durum', 'tamamlandi')
-  .neq('kullanici_id', user.id) // Kendi ID'mize eşit olmayanları getirir
-setAktifKabileUyeleri(uyeler ?? [])
+      // 3. MÜHÜRLÜ BAĞLARI VE DİĞER ÜYELERİN BİLGİLERİNİ ÇEK (Eşleme Bölümü)
+      const { data: baglarData } = await supabase
+        .from('karakter_baglari')
+        .select('*')
+        .or(`gonderen_id.eq.${user.id},alici_id.eq.${user.id}`)
 
-      const { data: siparisData } = await supabase.from('siparisler').select('*').eq('kullanici_id', user.id).order('created_at', { ascending: false })
-      setSiparisler(siparisData ?? [])
+      if (baglarData) {
+        const { data: tumKarakterler } = await supabase
+          .from('karakterler')
+          .select('kullanici_id, karakter_adi, gorsel_url')
 
+        const zenginlestirilmisBaglar = baglarData.map(bag => {
+          const digerId = bag.gonderen_id === user.id ? bag.alici_id : bag.gonderen_id
+          const digerKarakter = tumKarakterler?.find(c => c.kullanici_id === digerId)
+          
+          return {
+            ...bag,
+            diger_karakter_adi: digerKarakter?.karakter_adi ?? "Bilinmeyen Varlık",
+            diger_gorsel_url: digerKarakter?.gorsel_url ?? null
+          }
+        })
+        setBaglar(zenginlestirilmisBaglar as Bag[])
+      }
+
+      // 4. BAĞ KURMA LİSTESİ İÇİN AKTİF ÜYELERİ ÇEK (Kendi ID'mizi gizleyerek)
+      const { data: uyeler } = await supabase
+        .from('karakterler')
+        .select('kullanici_id, karakter_adi')
+        .eq('durum', 'tamamlandi')
+        .neq('kullanici_id', user.id) // Kendi ID'mizi listeden eler
+      setAktifKabileUyeleri(uyeler ?? [])
+
+      // 5. Görevleri çek
       const { data: gorevlerData } = await supabase.from('gecit_noktalari').select('id, isim, mitolojik_gecmis, simge').eq('tip', 'gorev')
       const { data: kabullerData } = await supabase.from('gorev_kabulleri').select('gorev_id, durum').eq('kullanici_id', user.id)
 
@@ -412,16 +433,14 @@ setAktifKabileUyeleri(uyeler ?? [])
                 </div>
               )}
 
-              {/* 3. SEKME: KOZMİK BAĞLAR (ONAYLAMALI İLİŞKİLER & BAĞ GÖNDERME) */}
+{/* 3. SEKME: KOZMİK BAĞLAR */}
               {aktifTab === 'baglar' && (
                 <div className="flex flex-col gap-5 pb-8 animate-fade-in">
                   
-{/* YENİ BAĞ KURMA FORMU (Mistik Tasarım - Güvenli Seçim Kutulu) */}
+                  {/* Bağ Kurma Formu aynı kalıyor... */}
                   <div className="border border-violet-500/15 bg-violet-500/5 p-4 rounded-md flex flex-col gap-3">
                     <span className="text-violet-400/50 text-[9px] tracking-widest uppercase">Mistik Bağ Ayini Başlat</span>
                     <div className="flex flex-col md:flex-row gap-2">
-                      
-                      {/* GÜVENLİ KARAKTER SEÇİM KUTUSU (Eski Input Alanı Kaldırıldı) */}
                       <select
                         value={hedefKarakterAdi}
                         onChange={e => setYeniKarakterAdi(e.target.value)}
@@ -460,30 +479,61 @@ setAktifKabileUyeleri(uyeler ?? [])
                   <span className="text-violet-400/40 text-[9px] tracking-widest uppercase">Mühürlenmiş Bağların</span>
                   {baglar.length === 0 && <p className="border border-dashed border-white/5 p-8 rounded text-center text-white/20 text-xs">Henüz kurulmuş bir kozmik bağ yok.</p>}
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* YENİ GÖRSEL VE BELİRGİN BAĞ KARTLARI */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {baglar.map(bag => {
                       const benimleMiKuruldu = bag.alici_id === profil?.id
                       const durum = bag.durum
                       const stil = bagStilleri[bag.bag_tipi]
+                      const digerIsim = bag.diger_karakter_adi ?? "Kabile Dostu"
+                      
+                      // Okunabilir görkemli bağ isimleri
+                      const bagUnvanlari: Record<string, string> = {
+                        muttefik: "✦ MÜTTEFİK BAĞI ✦",
+                        es: "💍 KUTSAL EŞ BAĞI 💍",
+                        ikiz_ruh: "🧬 İKİZ RUH BAĞI 🧬",
+                        koruyucu: "🛡 KORUYUCU BAĞI 🛡",
+                        dusman: "💀 EZELİ DÜŞMAN BAĞI 💀"
+                      }
 
                       return (
-                        <div key={bag.id} className={`border ${stil} bg-black/40 p-4 rounded flex items-center justify-between gap-4`}>
-                          <div className="flex flex-col gap-1 min-w-0">
-                            <span className="text-white text-xs md:text-sm truncate">
-                              {benimleMiKuruldu ? (bag.gonderen_karakter ?? "Bilinmeyen Varlık") : "Bir kabile dostu"}
-                            </span>
-                            <span className="text-white/40 text-[9px] uppercase tracking-widest">{bag.bag_tipi} Bağı</span>
+                        <div 
+                          key={bag.id} 
+                          className={`border ${stil} bg-black/55 p-4 rounded-md flex items-center justify-between gap-4 transition-all hover:border-white/10`}
+                          style={{ boxShadow: durum === 'onaylandi' ? `inset 0 0 15px rgba(255,255,255,0.02)` : 'none' }}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {/* DİĞER KARAKTERİN GÖRSELİ */}
+                            <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-black/20 shrink-0">
+                              {bag.diger_gorsel_url ? (
+                                <img src={bag.diger_gorsel_url} alt={digerIsim} className="w-full h-full object-cover object-top" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-white/10 text-xs font-bold">
+                                  {digerIsim[0].toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* İsim ve Parlayan Bağ Türü */}
+                            <div className="flex flex-col gap-0.5 min-w-0">
+                              <span className="text-white text-xs md:text-sm font-bold truncate">
+                                {digerIsim}
+                              </span>
+                              <span className="text-[9px] font-bold tracking-[0.15em] uppercase" style={{ textShadow: '0 0 8px currentColor' }}>
+                                {bagUnvanlari[bag.bag_tipi]}
+                              </span>
+                            </div>
                           </div>
 
                           <div className="shrink-0">
                             {durum === 'beklemede' && benimleMiKuruldu ? (
-                              <div className="flex gap-2">
-                                <button onClick={() => bagDurumuGuncelle(bag.id, 'onaylandi')} className="border border-emerald-500/30 text-emerald-400 px-3 py-1 text-[10px] uppercase hover:bg-emerald-500/10">Onayla</button>
-                                <button onClick={() => bagDurumuGuncelle(bag.id, 'reddedildi')} className="border border-rose-500/30 text-rose-400 px-3 py-1 text-[10px] uppercase hover:bg-rose-500/10">Reddet</button>
+                              <div className="flex gap-1.5">
+                                <button onClick={() => bagDurumuGuncelle(bag.id, 'onaylandi')} className="border border-emerald-500/40 text-emerald-400 px-2.5 py-1 text-[9px] uppercase hover:bg-emerald-500/10 transition-colors">Onayla</button>
+                                <button onClick={() => bagDurumuGuncelle(bag.id, 'reddedildi')} className="border border-rose-500/40 text-rose-400 px-2.5 py-1 text-[9px] uppercase hover:bg-rose-500/10 transition-colors">Reddet</button>
                               </div>
                             ) : (
-                              <span className="text-white/30 text-[9px] tracking-widest uppercase border border-white/5 px-2 py-1 rounded">
-                                {durum === 'onaylandi' ? 'Mühürlendi ✓' : 'Beklemede...'}
+                              <span className="text-white/20 text-[8px] tracking-widest uppercase border border-white/5 px-2 py-1 rounded bg-black/20">
+                                {durum === 'onaylandi' ? 'MÜHÜRLENDİ ✓' : 'BEKLEYEN TALEP'}
                               </span>
                             )}
                           </div>
