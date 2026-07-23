@@ -152,42 +152,41 @@ export default function OyunArkadaslari() {
 
         {/* Karakter Grid */}
         {filtrelenmisKarakterler.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {filtrelenmisKarakterler.map(karakter => (
-              <button key={karakter.id} onClick={() => setSeciliKarakter(karakter)} className="group flex flex-col gap-3 text-left">
-                <div className="relative aspect-square w-full bg-black/20 border border-white/10 rounded-md overflow-hidden group-hover:border-fuchsia-400/50 transition-all">
-                  {karakter.gorsel_url ? (
-                    <img src={karakter.gorsel_url} alt={karakter.karakter_adi} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <span className="text-fuchsia-400/20 text-4xl">✦</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+        {filtrelenmisKarakterler.map(karakter => (
+          <button key={karakter.id} onClick={() => setSeciliKarakter(karakter)} className="group flex flex-col gap-3 text-left">
+            <div className="relative aspect-square w-full bg-black/20 border border-white/10 rounded-md overflow-hidden group-hover:border-fuchsia-400/50 transition-all">
+              {karakter.gorsel_url ? (
+                <img src={karakter.gorsel_url} alt={karakter.karakter_adi} className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-fuchsia-400/20 text-4xl">✦</span>
                 </div>
-                <div className="flex flex-col">
-                  <h3 className="text-white/80 tracking-wider group-hover:text-white transition-colors">{karakter.karakter_adi}</h3>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-cyan-400/40 text-xs tracking-widest">{karakter.koken}</span>
-                    {durumStilleri[karakter.durum] && (
-                      <div className={`flex items-center gap-1.5 ${durumStilleri[karakter.durum].renk}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${durumStilleri[karakter.durum].bg}`} />
-                        <span className="text-xs tracking-widest uppercase">{durumStilleri[karakter.durum].etiket}</span>
-                      </div>
-                    )}
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+            </div>
+            <div className="flex flex-col">
+              <h3 className="text-white/80 tracking-wider group-hover:text-white transition-colors">{karakter.karakter_adi}</h3>
+              <div className="flex items-baseline gap-2">
+                <span className="text-cyan-400/40 text-xs tracking-widest">{karakter.koken}</span>
+                {durumStilleri[karakter.durum] && (
+                  <div className={`flex items-center gap-1.5 ${durumStilleri[karakter.durum].renk}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${durumStilleri[karakter.durum].bg}`} />
+                    <span className="text-xs tracking-widest uppercase">{durumStilleri[karakter.durum].etiket}</span>
                   </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-white/40">Aramanızla eşleşen bir karakter bulunamadı.</p>
-          </div>
-        )}
+                )}
+              </div>
+            </div>
+          </button>
+        ))}
       </div>
-
-      {/* Modal */}
+    ) : (
+      <div className="text-center py-16">
+        <p className="text-white/40">Aramanızla eşleşen bir karakter bulunamadı.</p>
+      </div>
+    )}
+  </div>
+{/* Modal — Markdown Destekli Yeni Sürüm */}
       {seciliKarakter && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSeciliKarakter(null)}>
           <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" />
@@ -211,12 +210,24 @@ export default function OyunArkadaslari() {
                   <div><p className="text-white/30 text-xs tracking-widest uppercase">Durum</p><p className="text-white/70 capitalize">{seciliKarakter.durum}</p></div>
                 </div>
               </div>
+              
               <div className="w-full h-px bg-white/10" />
-              {([['Köken Hikayesi', seciliKarakter.koken_hikayesi], ['Güçler', seciliKarakter.gucler], ['Zayıflıklar', seciliKarakter.zayifliklar], ['Motivasyon', seciliKarakter.motivasyon],
+              
+              {/* DÖNGÜ GÜNCELLENDİ: Buradaki tüm detaylar artık Markdown olarak render edilir */}
+              {([
+                ['Köken Hikayesi', seciliKarakter.koken_hikayesi], 
+                ['Güçler', seciliKarakter.gucler], 
+                ['Zayıflıklar', seciliKarakter.zayifliklar], 
+                ['Motivasyon', seciliKarakter.motivasyon]
               ] as const).filter(([, v]) => v).map(([label, value]) => (
                 <div key={label} className="flex flex-col gap-1">
                   <span className="text-fuchsia-400/50 text-sm tracking-widest uppercase">{label}</span>
-                  <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">{value}</p>
+                  {/* Düz p etiketi kaldırıldı, ReactMarkdown entegre edildi */}
+                  <div className="text-white/70 text-sm leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents}>
+                      {value}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               ))}
             </div>
